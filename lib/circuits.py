@@ -1,6 +1,61 @@
 import cirq
 import sympy
+
+
 def build_gan_circuits(generator_layers: int, discriminator_layers: int, data_bus_size: int):
+    pass
+
+
+def build_generator(generator_layers: int, label_qubit, data_qubits, label_symbol):
+    generator = cirq.Circuit()
+    layer_symbols_number = (len(data_qubits) + 1) * 2 + (len(data_qubits))
+    symbols = sympy.symbols(f"g:{generator_layers * layer_symbols_number}")
+
+    for i in range(generator_layers):
+        generator.append([_build_generator_layer(label_qubit, data_qubits, label_symbol,
+                                                 symbols[i * layer_symbols_number: (i + 1) * layer_symbols_number])])
+
+    return generator, symbols
+
+
+def _build_generator_layer(label_qubit, data_qubits, label_symbol, data_symbols):
+    assert len(data_symbols) == (len(data_qubits) + 1) * 2 + (len(data_qubits))
+
+    layer = cirq.Circuit(
+        cirq.rz(label_symbol).on(label_qubit))
+    i = 0
+    for data_qubit in data_qubits:
+        layer.append([cirq.rx(data_symbols[i]).on(data_qubit)])
+        i += 1
+    layer.append([cirq.rx(data_symbols[i]).on(label_qubit)])
+    i += 1
+
+    for data_qubit in data_qubits:
+        layer.append([cirq.rz(data_symbols[i]).on(data_qubit)])
+        i += 1
+    layer.append([cirq.rz(data_symbols[i]).on(label_qubit)])
+    i += 1
+
+    j = 0
+    while j < len(data_qubits) // 2:
+        layer.append([cirq.ZZ(data_qubits[j], data_qubits[j + 1]) ** data_symbols[i]])
+        j += 2
+        i += 1
+    if len(data_qubits) % 2 == 1:
+        layer.append([cirq.ZZ(data_qubits[-1], label_qubit) ** data_symbols[i]])
+        i += 1
+
+    j = 1
+    while j < len(data_qubits) // 2:
+        layer.append([cirq.ZZ(data_qubits[j], data_qubits[j + 1]) ** data_symbols[i]])
+        j += 2
+        i += 1
+
+    if len(data_qubits) % 2 == 0:
+        layer.append([cirq.ZZ(data_qubits[-1], label_qubit) ** data_symbols[i]])
+
+    return layer
+
     out_qubit, label_disc, data1, data2, data3, label_gen = cirq.GridQubit.rect(1, 6)
 
     ls = sympy.symbols("l")
