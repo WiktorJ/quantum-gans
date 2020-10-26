@@ -11,7 +11,7 @@ def build_gan_circuits(generator_layers: int, discriminator_layers: int, data_bu
     gen, gen_symbols = build_circuit(generator_layers, label_gen_qubit, data_qubits + [label_gen_qubit], ls, "g")
     disc, disc_symbols = build_circuit(discriminator_layers, label_disc_qubit,
                                        [out_qubit, label_disc_qubit] + data_qubits, ls, "d")
-    return gen, gen_symbols, disc, disc_symbols, ls
+    return gen, gen_symbols, disc, disc_symbols, ls, out_qubit
 
 
 def build_circuit(layers: int, label_qubit, data_qubits, label_symbol, data_qubits_prefix):
