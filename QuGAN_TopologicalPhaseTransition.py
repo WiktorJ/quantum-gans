@@ -8,6 +8,7 @@ import cirq
 import numpy as np
 from cirq import GridQubit, ops
 
+cirq.SingleQubitGate
 
 def construct_hamiltonian(l, gzz, gx, gzxz, pbc=True):
     """
