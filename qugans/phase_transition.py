@@ -35,61 +35,74 @@ def construct_hamiltonian(l, gzz, gx, gzxz, pbc=True):
     return H
 
 
-def build_ground_state_circuit(g, size):
+def build_ground_state_circuit(size=None, qubits=None):
     """
     Builds the circuit necessary to generate ground state
-    :param g: parametrization for the transition curve
     :param size: circuit size excluding boundary qubits
+    :param size: qubits circuit of the circuit excluding boundary qubits
     :return: cirq Circuit
     """
 
-    circuti_size = size + 2
-    qubits = cirq.GridQubit.rect(1, circuti_size)
+    if not size and not qubits:
+        raise ValueError("One of the (size, qubits) must be specified")
+
+    if not qubits:
+        circuit_size = size + 2
+        qubits = cirq.GridQubit.rect(1, circuit_size)
+    else:
+        q1, qn = cirq.GridQubit.rect(1, 2)
+        qubits = [q1] + qubits + [qn]
+        circuit_size = len(qubits)
+
+    # theta_v: symbol for V tilda gate parametrization
+    # theta_w: symbol for W tilda gate parametrization
+    # theta_r: symbol for R tilda gate parametrization
+    theta_v, theta_w, theta_r = sympy.symbols("theta:3")
     circuit = cirq.Circuit()
 
-    circuit.append([build_u1_gate(qubits[0], qubits[1], g)])
+    circuit.append([build_u1_gate(qubits[0], qubits[1], theta_r)])
 
-    for i in range(1, circuti_size - 1):
-        circuit.append(build_u_gate(qubits[i], qubits[i + 1], g))
+    for i in range(1, circuit_size - 1):
+        circuit.append(build_u_gate(qubits[i], qubits[i + 1], theta_v, theta_w))
 
-    return circuit
+    return circuit, (theta_v, theta_w, theta_r)
 
 
-def build_u1_gate(q1, q2, g):
+def build_u1_gate(q1, q2, theta_r):
     u1 = cirq.Circuit(
         cirq.H(q1),
         cirq.CNOT(q1, q2),
         cirq.Z(q2),  # R gate from the paper == Z and RY gate
-        cirq.ry(_get_theta_r(g)).on(q2)
+        cirq.ry(theta_r).on(q2)
     )
 
-    if g > 0:
-        u1 = u1.append([cirq.H(q2), cirq.CNOT(q1, q2), cirq.H(q2)])
+    # For g > 0
+    #     u1 = u1.append([cirq.H(q2), cirq.CNOT(q1, q2), cirq.H(q2)])
     return u1
 
 
-def build_u_gate(q1, q2, g):
+def build_u_gate(q1, q2, theta_v, theta_w):
     return cirq.Circuit(
         cirq.X(q1),
-        cirq.ry(_get_theta_w(g)).on(q2),  # W tilda gate from the paper == ry
+        cirq.ry(theta_w).on(q2),  # W tilda gate from the paper == ry
         cirq.CNOT(q1, q2),
         cirq.X(q1),
-        cirq.ry(_get_theta_w(g)).on(q2),
-        cirq.ry(_get_theta_v(g)).on(q2),  # V tilda gate from the paper == ry
+        cirq.ry(theta_w).on(q2),
+        cirq.ry(theta_v).on(q2),  # V tilda gate from the paper == ry
         cirq.CNOT(q1, q2),
         cirq.X(q1),
-        cirq.ry(_get_theta_v(g)).on(q2),
+        cirq.ry(theta_v).on(q2),
     )
 
 
 # Methods to construct angles for U1 and U gates from the paper
-def _get_theta_v(g):
+def get_theta_v(g):
     return np.arcsin(np.sqrt(np.abs(g)) / np.sqrt(1 + np.abs(g)))
 
 
-def _get_theta_w(g):
+def get_theta_w(g):
     return np.arccos((np.sign(g) * np.sqrt(np.abs(g))) / np.sqrt(1 + np.abs(g)))
 
 
-def _get_theta_r(g):
+def get_theta_r(g):
     return 2 * np.arcsin(1 / np.sqrt(1 + np.abs(g)))
