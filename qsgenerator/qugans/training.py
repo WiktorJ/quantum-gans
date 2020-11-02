@@ -106,15 +106,15 @@ class Trainer:
               disc_iteration=100,
               gen_iteration=2):
         if disc_cost is None:
-            disc_cost = self.default_disc_cost
+            disc_cost = lambda: self.default_disc_cost(disc_weights, gen_weights)
         if gen_cost is None:
-            gen_cost = self.default_gen_cost
+            gen_cost = lambda: self.default_gen_cost(disc_weights, gen_weights)
 
         for epoch in range(epochs):
             for step in range(disc_iteration):
-                opt.minimize(disc_cost(disc_weights, gen_weights), disc_weights)
+                opt.minimize(disc_cost, disc_weights)
                 # if step % 5 == 0:
-            cost_val = disc_cost(disc_weights, gen_weights).numpy()
+            cost_val = disc_cost().numpy()
             print("Epoch {}: cost = {}".format(epoch, cost_val))
 
             ##############################################################################
@@ -137,9 +137,9 @@ class Trainer:
             # adversarial game.
 
             for step in range(gen_iteration):
-                opt.minimize(gen_cost(disc_weights, gen_weights), gen_weights)
+                opt.minimize(gen_cost, gen_weights)
                 # if step % 5 == 0:
-            cost_val = gen_cost(disc_weights, gen_weights).numpy()
+            cost_val = gen_cost().numpy()
             print("Epoch {}: cost = {}".format(epoch, cost_val))
 
             ##############################################################################
@@ -153,7 +153,7 @@ class Trainer:
             # indicating that the discriminator assigns equal probability to both real and
             # generated data.
 
-            print("Discriminator cost: ", disc_cost(disc_weights, gen_weights).numpy())
+            print("Discriminator cost: ", disc_cost().numpy())
             print("Generator weights:", gen_weights)
             print("Discriminator weights", disc_weights)
 

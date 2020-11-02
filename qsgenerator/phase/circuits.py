@@ -42,7 +42,7 @@ def build_u1_gate(q1, q2, theta_r):
     u1 = cirq.Circuit(
         cirq.H(q1),
         cirq.CNOT(q1, q2),
-        U3(theta_r, 0, np.pi).on(q2)
+        *_get_r_gate(q2, theta_r)
     )
 
     # For g > 0
@@ -53,16 +53,27 @@ def build_u1_gate(q1, q2, theta_r):
 def build_u_gate(q1, q2, theta_v, theta_w):
     return cirq.Circuit(
         cirq.X(q1),
-        U3(theta_w, 0, 0).on(q2),
+        *_get_wv_tilda_gate(q2, theta_w),
         cirq.CNOT(q1, q2),
         cirq.X(q1),
-        U3(theta_w, 0, 0).transpose().on(q2),
-        U3(theta_v, 0, 0).on(q2),
+        *_get_wv_tilda_transpose_gate(q2, theta_w),
+        *_get_wv_tilda_gate(q2, theta_v),
         cirq.CNOT(q1, q2),
         cirq.X(q1),
-        U3(theta_v, 0, 0).transpose().on(q2),
+        *_get_wv_tilda_transpose_gate(q2, theta_v),
     )
 
+
+def _get_wv_tilda_gate(q, theta):
+    return [cirq.ry(theta).on(q)]
+
+
+def _get_wv_tilda_transpose_gate(q, theta):
+    return [cirq.X(q), cirq.ry(theta).on(q), cirq.X(q)]
+
+
+def _get_r_gate(q, theta):
+    return [cirq.Z(q), cirq.ry(theta).on(q)]
 
 
 class U3(cirq.Gate):
