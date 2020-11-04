@@ -122,9 +122,10 @@ class Trainer:
               opt,
               disc_cost=None,
               gen_cost=None,
-              epochs=50,
+              epochs=100,
               disc_iteration=100,
-              gen_iteration=2):
+              gen_iteration=2,
+              print_interval_epoch=20):
         if disc_cost is None:
             disc_cost = lambda: self.default_disc_cost(disc_weights, gen_weights)
         if gen_cost is None:
@@ -133,21 +134,22 @@ class Trainer:
         for epoch in range(epochs):
             for step in range(disc_iteration):
                 opt.minimize(disc_cost, disc_weights)
-                # if step % 5 == 0:
             cost_val = disc_cost().numpy()
-            print("Epoch {}: cost = {}".format(epoch, cost_val))
 
-            ##############################################################################
-            # At the discriminator’s optimum, the probability for the discriminator to
-            # correctly classify the real data should be close to one.
+            if epoch % print_interval_epoch == 0:
+                print("Epoch {}: cost = {}".format(epoch, cost_val))
 
-            print("Prob(real classified as real): ", self.prob_real_true(disc_weights).numpy())
+                ##############################################################################
+                # At the discriminator’s optimum, the probability for the discriminator to
+                # correctly classify the real data should be close to one.
 
-            ##############################################################################
-            # For comparison, we check how the discriminator classifies the
-            # generator’s (still unoptimized) fake data:
+                print("Prob(real classified as real): ", self.prob_real_true(disc_weights).numpy())
 
-            print("Prob(fake classified as real): ", self.prob_fake_true(gen_weights, disc_weights).numpy())
+                ##############################################################################
+                # For comparison, we check how the discriminator classifies the
+                # generator’s (still unoptimized) fake data:
+
+                print("Prob(fake classified as real): ", self.prob_fake_true(gen_weights, disc_weights).numpy())
 
             ##############################################################################
             # In the adversarial game we now have to train the generator to better
@@ -158,24 +160,25 @@ class Trainer:
 
             for step in range(gen_iteration):
                 opt.minimize(gen_cost, gen_weights)
-                # if step % 5 == 0:
             cost_val = gen_cost().numpy()
-            print("Epoch {}: cost = {}".format(epoch, cost_val))
 
-            ##############################################################################
-            # At the optimum of the generator, the probability for the discriminator
-            # to be fooled should be close to 1.
+            if epoch % print_interval_epoch == 0:
+                print("Epoch {}: cost = {}".format(epoch, cost_val))
 
-            print("Prob(fake classified as real): ", self.prob_fake_true(gen_weights, disc_weights).numpy())
+                ##############################################################################
+                # At the optimum of the generator, the probability for the discriminator
+                # to be fooled should be close to 1.
 
-            ##############################################################################
-            # At the joint optimum the discriminator cost will be close to zero,
-            # indicating that the discriminator assigns equal probability to both real and
-            # generated data.
+                print("Prob(fake classified as real): ", self.prob_fake_true(gen_weights, disc_weights).numpy())
 
-            print("Discriminator cost: ", disc_cost().numpy())
-            print("Generator weights:", gen_weights)
-            print("Discriminator weights", disc_weights)
+                ##############################################################################
+                # At the joint optimum the discriminator cost will be close to zero,
+                # indicating that the discriminator assigns equal probability to both real and
+                # generated data.
+
+                print("Discriminator cost: ", disc_cost().numpy())
+                print("Generator weights:", gen_weights)
+                print("Discriminator weights", disc_weights)
 
 
 class CustomSchedule(tf.keras.optimizers.schedules.LearningRateSchedule):
