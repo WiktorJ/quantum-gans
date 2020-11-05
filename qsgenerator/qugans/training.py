@@ -85,9 +85,9 @@ class Trainer:
         full_weights = tf.reshape(full_weights, (1, full_weights.shape[0]))
 
         return self.expectation([self.gen],
-                         symbol_names=self.ds + self.gs + (self.ls,),
-                         symbol_values=full_weights,
-                         operators=[cirq.Z(self.out_qubit)])
+                                symbol_names=self.ds + self.gs + (self.ls,),
+                                symbol_values=full_weights,
+                                operators=[cirq.Z(self.out_qubit)])
 
     def _get_sampled_expectation(self, expectation):
         return lambda circuit, symbol_names, symbol_values, operators: \

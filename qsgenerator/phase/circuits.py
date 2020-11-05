@@ -20,8 +20,7 @@ def build_ground_state_circuit(size=None, qubits=None):
         circuit_size = size + 2
         qubits = cirq.GridQubit.rect(1, circuit_size)
     else:
-        q1, qn = cirq.GridQubit.rect(1, 2)
-        qubits = [q1] + qubits + [qn]
+        qubits = [cirq.GridQubit.rect(0, 0, 1, qubits[0].col)] + qubits + [cirq.GridQubit.rect(0, 0, 1, qubits[-1].col)]
         circuit_size = len(qubits)
 
     # theta_v: symbol for V tilda gate parametrization
