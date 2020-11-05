@@ -18,9 +18,10 @@ def build_circuit(layers: int, label_qubit, data_qubits, label_symbol, data_qubi
     circuit = cirq.Circuit()
     layer_symbols_size = len(data_qubits) * 3 - 1
     symbols = sympy.symbols(f"{data_qubits_prefix}:{layers * layer_symbols_size}")
-
-    for i in range(layers):
-        circuit.append([_build_layer(label_qubit, data_qubits, label_symbol,
+    circuit.append([_build_layer(label_qubit, data_qubits, label_symbol,
+                                 symbols[0:  layer_symbols_size])])
+    for i in range(1, layers):
+        circuit.append([_build_layer(None, data_qubits, None,
                                      symbols[i * layer_symbols_size: (i + 1) * layer_symbols_size])])
 
     return circuit, symbols
@@ -30,8 +31,11 @@ def _build_layer(label_qubit, data_qubits, label_symbol, data_symbols):
     assert len(data_symbols) == len(data_qubits) * 3 - 1
 
     # Add the label rotation
-    layer = cirq.Circuit(
-        cirq.rz(label_symbol).on(label_qubit))
+    if label_qubit is not None and label_symbol is not None:
+        layer = cirq.Circuit(
+            cirq.rz(label_symbol).on(label_qubit))
+    else:
+        layer = cirq.Circuit()
 
     # Define symbol iterator
     i = 0
