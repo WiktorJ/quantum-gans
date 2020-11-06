@@ -137,7 +137,7 @@ class Trainer:
             cost_val = disc_cost().numpy()
 
             if epoch % print_interval_epoch == 0:
-                print("Epoch {}: cost = {}".format(epoch, cost_val))
+                print("Epoch {}: discriminator cost = {}".format(epoch, cost_val))
 
                 ##############################################################################
                 # At the discriminator’s optimum, the probability for the discriminator to
@@ -163,7 +163,7 @@ class Trainer:
             cost_val = gen_cost().numpy()
 
             if epoch % print_interval_epoch == 0:
-                print("Epoch {}: cost = {}".format(epoch, cost_val))
+                print("Epoch {}: generator cost = {}".format(epoch, cost_val))
 
                 ##############################################################################
                 # At the optimum of the generator, the probability for the discriminator
@@ -188,13 +188,3 @@ class CustomSchedule(tf.keras.optimizers.schedules.LearningRateSchedule):
 
     def __call__(self, step):
         return max(10 * math.e ** - (step / (self.warmup_steps / math.log(100))), 0.1)
-
-# epochs = 50
-# disc_iteration = 100
-# gen_iteration = 2
-# Trainer(0,0,0,0,0,0,0,0,0).train([],
-#       [],
-#       0,
-#       epochs=epochs,
-#       disc_iteration=disc_iteration,
-#       gen_iteration=gen_iteration)
