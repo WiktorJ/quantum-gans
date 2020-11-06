@@ -65,11 +65,12 @@ class Trainer:
 
     def real_disc_circuit_eval(self, disc_weights):
         # cirq.Simulator().simulate(real)
+        g = self.g_provider()
         full_weights = tf.keras.layers.Concatenate(axis=0)([
-            np.array([get_theta_v(self.g_provider()), get_theta_w(self.g_provider()), get_theta_r(self.g_provider())],
+            np.array([get_theta_v(g), get_theta_w(g), get_theta_r(g)],
                      dtype=np.float32),
             disc_weights,
-            np.array([map_to_radians(self.g_provider())], dtype=np.float32)
+            np.array([map_to_radians(g)], dtype=np.float32)
         ])
         return self.expectation([self.real],
                                 symbol_names=self.real_symbols + self.ds + (self.ls,),
