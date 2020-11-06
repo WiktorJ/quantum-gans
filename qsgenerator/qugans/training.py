@@ -28,7 +28,8 @@ class Trainer:
                  use_analytical_expectation=False,
                  use_real_circuit_for_phase=True,
                  sampling_repetitions=500,
-                 gradient_method=tfq.differentiators.ForwardDifference()):
+                 gradient_method=None):
+        gradient_method = gradient_method if gradient_method is not None else tfq.differentiators.ForwardDifference()
         self.sampling_repetitions = sampling_repetitions
         self.use_analytical_expectation = use_analytical_expectation
         self.real = real
