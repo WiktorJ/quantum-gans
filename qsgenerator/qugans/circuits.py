@@ -34,11 +34,13 @@ def _build_layer(label_qubit, data_qubits, label_symbol, data_symbols, full_labe
 
     # Add the label rotation
     if label_qubit is not None and label_symbol is not None:
-        layer = cirq.Circuit(
-            cirq.rz(label_symbol).on(label_qubit))
+        layer = cirq.Circuit()
         if full_labeling:
             for data_qubit in data_qubits:
-                layer.append(cirq.rz(label_symbol).on(data_qubit))
+                layer.append([cirq.rz(label_symbol).on(data_qubit)])
+        else:
+            layer = cirq.Circuit(
+                cirq.rz(label_symbol).on(label_qubit))
     else:
         layer = cirq.Circuit()
 
