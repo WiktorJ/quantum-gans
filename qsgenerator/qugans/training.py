@@ -181,12 +181,3 @@ class Trainer:
                 print("Discriminator cost: ", disc_cost().numpy())
                 print("Generator weights:", gen_weights)
                 print("Discriminator weights", disc_weights)
-
-
-class CustomSchedule(tf.keras.optimizers.schedules.LearningRateSchedule):
-    def __init__(self, warmup_steps=4000):
-        super(CustomSchedule, self).__init__()
-        self.warmup_steps = warmup_steps
-
-    def __call__(self, step):
-        return max(10 * math.e ** - (step / (self.warmup_steps / math.log(100))), 0.1)
