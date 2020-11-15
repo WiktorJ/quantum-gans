@@ -42,6 +42,7 @@ class Trainer:
         self.disc = disc
         self.gs = gs
         self.g_provider = g_provider
+        self.use_real_circuit_for_phase = use_real_circuit_for_phase
         backend = None if use_real_circuit_for_phase else PhaseTransitionFinalStateSimulator(self.g_provider,
                                                                                              self.size)
         if use_analytical_expectation:
@@ -100,7 +101,8 @@ class Trainer:
                         repetitions=self.sampling_repetitions)
 
     def prob_real_true(self, disc_weights):
-        true_disc_output = self.real_disc_circuit_eval(disc_weights)
+        true_disc_output = self.real_disc_circuit_eval(
+            disc_weights) if self.use_real_circuit_for_phase else self.real_disc_circuit_eval_mocked(disc_weights)
         # convert to probability
         prob_real_true = (true_disc_output + 1) / 2
         return prob_real_true
@@ -155,7 +157,6 @@ class Trainer:
                 # correctly classify the real data should be close to one.
 
                 print("Prob(real classified as real): ", self.prob_real_true(disc_weights).numpy())
-
 
             ##############################################################################
             # In the adversarial game we now have to train the generator to better
