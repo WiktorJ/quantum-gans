@@ -125,6 +125,7 @@ class Trainer:
                 opt.minimize(disc_cost, disc_weights)
             cost_val = disc_cost().numpy()
 
+            print("----------------------------------------------------")
             if epoch % print_interval_epoch == 0:
                 print("----------- AFTER DISCRIMINATOR TRAINING -----------")
                 print("Epoch {}: generator cost = {}".format(epoch, gen_cost().numpy()))
