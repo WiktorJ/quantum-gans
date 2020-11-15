@@ -127,7 +127,8 @@ class Trainer:
               epochs=100,
               disc_iteration=100,
               gen_iteration=2,
-              print_interval_epoch=20):
+              print_interval_epoch=20,
+              print_weights=False):
         if disc_cost is None:
             disc_cost = lambda: self.default_disc_cost(disc_weights, gen_weights)
         if gen_cost is None:
@@ -139,7 +140,15 @@ class Trainer:
             cost_val = disc_cost().numpy()
 
             if epoch % print_interval_epoch == 0:
+                print("----------- AFTER DISCRIMINATOR TRAINING -----------")
+                print("Epoch {}: generator cost = {}".format(epoch, gen_cost().numpy()))
                 print("Epoch {}: discriminator cost = {}".format(epoch, cost_val))
+
+                ##############################################################################
+                # For comparison, we check how the discriminator classifies the
+                # generator’s (still unoptimized) fake data:
+
+                print("Prob(fake classified as real): ", self.prob_fake_true(gen_weights, disc_weights).numpy())
 
                 ##############################################################################
                 # At the discriminator’s optimum, the probability for the discriminator to
@@ -147,11 +156,6 @@ class Trainer:
 
                 print("Prob(real classified as real): ", self.prob_real_true(disc_weights).numpy())
 
-                ##############################################################################
-                # For comparison, we check how the discriminator classifies the
-                # generator’s (still unoptimized) fake data:
-
-                print("Prob(fake classified as real): ", self.prob_fake_true(gen_weights, disc_weights).numpy())
 
             ##############################################################################
             # In the adversarial game we now have to train the generator to better
@@ -165,19 +169,25 @@ class Trainer:
             cost_val = gen_cost().numpy()
 
             if epoch % print_interval_epoch == 0:
+                print("----------- AFTER GENERATOR TRAINING -----------")
                 print("Epoch {}: generator cost = {}".format(epoch, cost_val))
-
-                ##############################################################################
-                # At the optimum of the generator, the probability for the discriminator
-                # to be fooled should be close to 1.
-
-                print("Prob(fake classified as real): ", self.prob_fake_true(gen_weights, disc_weights).numpy())
-
                 ##############################################################################
                 # At the joint optimum the discriminator cost will be close to zero,
                 # indicating that the discriminator assigns equal probability to both real and
                 # generated data.
+                print("Epoch {}: discriminator cost = {}".format(epoch, disc_cost().numpy()))
 
-                print("Discriminator cost: ", disc_cost().numpy())
-                print("Generator weights:", gen_weights)
-                print("Discriminator weights", disc_weights)
+                ##############################################################################
+                # At the optimum of the generator, the probability for the discriminator
+                # to be fooled should be close to 1.
+                print("Prob(fake classified as real): ", self.prob_fake_true(gen_weights, disc_weights).numpy())
+                print("Prob(real classified as real): ", self.prob_real_true(disc_weights).numpy())
+
+                if print_weights:
+                    print("Generator weights:", gen_weights)
+                    print("Discriminator weights", disc_weights)
+
+        print("-------------------------------------")
+        print("----------- TRAINING DONE -----------")
+        print("Generator weights:", gen_weights)
+        print("Discriminator weights", disc_weights)
