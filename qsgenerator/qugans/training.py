@@ -54,7 +54,7 @@ class Trainer:
         # cirq.Simulator().simulate(real)
         g = self.g_provider()
         full_weights = tf.keras.layers.Concatenate(axis=0)([
-            np.array(self.real_values_provider(),
+            np.array(self.real_values_provider(g),
                      dtype=np.float32),
             disc_weights,
             np.array([map_to_radians(g)], dtype=np.float32)
