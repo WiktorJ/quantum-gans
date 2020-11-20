@@ -57,3 +57,10 @@ def get_theta_w(g):
 
 def get_theta_r(g):
     return 2 * np.arcsin(1 / np.sqrt(1 + np.abs(g)))
+
+
+def get_g_parameters_provider():
+    def provider(g):
+        return [get_theta_v(g), get_theta_w(g), get_theta_r(g)]
+
+    return provider

@@ -7,7 +7,6 @@ import tensorflow as tf
 import tensorflow_quantum as tfq
 import numpy as np
 
-from qsgenerator.phase.analitical import get_theta_v, get_theta_w, get_theta_r
 from qsgenerator.utils import map_to_radians
 
 
@@ -24,10 +23,12 @@ class Trainer:
                  gs: Tuple[sympy.Symbol],
                  real_symbols: Tuple[sympy.Symbol],
                  ls: sympy.Symbol,
+                 real_values_provider: Callable,
                  use_analytical_expectation=False,
                  sampling_repetitions=500,
                  gradient_method_provider=None):
         gradient_method_provider = gradient_method_provider if gradient_method_provider is not None else lambda: tfq.differentiators.ForwardDifference()
+        self.real_values_provider = real_values_provider
         self.sampling_repetitions = sampling_repetitions
         self.use_analytical_expectation = use_analytical_expectation
         self.real = real
@@ -53,7 +54,7 @@ class Trainer:
         # cirq.Simulator().simulate(real)
         g = self.g_provider()
         full_weights = tf.keras.layers.Concatenate(axis=0)([
-            np.array([get_theta_v(g), get_theta_w(g), get_theta_r(g)],
+            np.array(self.real_values_provider(),
                      dtype=np.float32),
             disc_weights,
             np.array([map_to_radians(g)], dtype=np.float32)

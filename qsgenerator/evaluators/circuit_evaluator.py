@@ -1,7 +1,4 @@
-from typing import Tuple
-
 import cirq
-import sympy
 import numpy as np
 
 
