@@ -24,10 +24,12 @@ class Trainer:
                  real_symbols: Tuple[sympy.Symbol],
                  ls: sympy.Symbol,
                  real_values_provider: Callable,
+                 label_value_provider: Callable = None,
                  use_analytical_expectation=False,
                  sampling_repetitions=500,
                  gradient_method_provider=None):
         gradient_method_provider = gradient_method_provider if gradient_method_provider is not None else lambda: tfq.differentiators.ForwardDifference()
+        self.label_value_provider = label_value_provider if label_value_provider is not None else map_to_radians
         self.real_values_provider = real_values_provider
         self.sampling_repetitions = sampling_repetitions
         self.use_analytical_expectation = use_analytical_expectation
