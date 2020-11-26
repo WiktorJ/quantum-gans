@@ -3,26 +3,26 @@ import sympy
 
 
 def build_gan_circuits(generator_layers: int, discriminator_layers: int, data_bus_size: int,
-                       full_layer_labeling: bool = True, input_only_labeling: bool = True):
+                       full_layer_labeling: bool = True, all_layers_labeling: bool = False):
     qubits = cirq.GridQubit.rect(1, 3 + data_bus_size)
     out_qubit, label_disc_qubit = qubits[0], qubits[1]
     data_qubits = qubits[2:-1]
     label_gen_qubit = qubits[-1]
     ls = sympy.symbols("l")
     gen, gen_symbols = build_circuit(generator_layers, label_gen_qubit, data_qubits + [label_gen_qubit], ls, "g",
-                                     full_layer_labeling, input_only_labeling)
+                                     full_layer_labeling, all_layers_labeling)
     disc, disc_symbols = build_circuit(discriminator_layers, label_disc_qubit,
-                                       [out_qubit, label_disc_qubit] + data_qubits, ls, "d", full_layer_labeling, input_only_labeling)
+                                       [out_qubit, label_disc_qubit] + data_qubits, ls, "d", full_layer_labeling, all_layers_labeling)
     return gen, gen_symbols, disc, disc_symbols, ls, data_qubits, out_qubit
 
 
 def build_circuit(layers: int, label_qubit, data_qubits, label_symbol, data_qubits_prefix,
-                  full_layer_labeling: bool = True, input_only_labeling: bool = True):
+                  full_layer_labeling: bool = True, all_layers_labeling: bool = False):
     circuit = cirq.Circuit()
     layer_symbols_size = len(data_qubits) * 3 - 1
     symbols = sympy.symbols(f"{data_qubits_prefix}:{layers * layer_symbols_size}")
     for i in range(0, layers):
-        if i > 0 and input_only_labeling:
+        if i > 0 and not all_layers_labeling:
             circuit.append([_build_layer(None, data_qubits, None,
                                          symbols[i * layer_symbols_size: (i + 1) * layer_symbols_size],
                                          full_layer_labeling)])

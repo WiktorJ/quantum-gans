@@ -13,7 +13,7 @@ class CircuitEvaluator:
         if trace_dims:
             state_vector = cirq.partial_trace_of_state_vector_as_mixture(state_vector, trace_dims)
             if max_traced:
-                prob, state_vector = max(state_vector)
+                prob, state_vector = max(state_vector, key=lambda el: el[0])
                 print(f"Max probability state after tracing has probability: {prob}")
         return state_vector
 
