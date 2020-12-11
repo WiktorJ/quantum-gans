@@ -5,23 +5,29 @@ from cirq.type_workarounds import NotImplementedType
 from typing import Union, Iterable
 
 
-def build_ground_state_circuit(size=None, qubits=None):
+def build_ground_state_circuit(size=None, qubits=None, full_circuit=True):
     """
     Builds the circuit necessary to generate ground state
-    :param size: circuit size excluding boundary qubits
-    :param size: qubits circuit of the circuit excluding boundary qubits
+    :param size: circuit size
+    :param qubits: qubits to create the SPT circuit
+    :param full_circuit: if False boundary qubits will be added, if True not are used
     :return: cirq Circuit
     """
 
     if not size and not qubits:
         raise ValueError("One of the (size, qubits) must be specified")
 
+    circuit_size = len(qubits) if qubits else size
+    if not full_circuit:
+        circuit_size += 2
+
+    if (size and size < circuit_size) or (qubits and len(qubits) < circuit_size):
+        raise ValueError(f"At least 5 qubits are required, but the size is only {circuit_size}.")
+
     if not qubits:
-        circuit_size = size + 2
         qubits = cirq.GridQubit.rect(1, circuit_size)
-    else:
+    elif not full_circuit:
         qubits = cirq.GridQubit.rect(1, 1, 1, qubits[0].col) + qubits + cirq.GridQubit.rect(1, 1, 1, qubits[-1].col)
-        circuit_size = len(qubits)
 
     # theta_v: symbol for V tilda gate parametrization
     # theta_w: symbol for W tilda gate parametrization
