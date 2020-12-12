@@ -1,3 +1,10 @@
 tensorflow==2.3.1
-matplotlib
+matplotlib~=3.3.2
 tensorflow-quantum
+
+sympy~=1.5
+cirq~=0.9.1
+numpy~=1.18.5
+setuptools~=49.2.1
+ipython~=7.18.1
+scipy~=1.5.3
