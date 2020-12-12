@@ -151,7 +151,7 @@ class Trainer:
             if epoch % snapshot_interval_epochs == 0:
                 print("----------------------------------------------------")
                 print("----------- AFTER DISCRIMINATOR TRAINING -----------")
-                print("Epoch {}: generator cost = {}".format(epoch, gen_cost().numpy()))
+                print("Epoch {}: generator cost = {}".format(epoch, gen_cost_val))
                 print("Epoch {}: discriminator cost = {}".format(epoch, disc_cost_val))
 
                 ##############################################################################
@@ -193,7 +193,7 @@ class Trainer:
                 # At the joint optimum the discriminator cost will be close to zero,
                 # indicating that the discriminator assigns equal probability to both real and
                 # generated data.
-                print("Epoch {}: discriminator cost = {}".format(epoch, disc_cost().numpy()))
+                print("Epoch {}: discriminator cost = {}".format(epoch, disc_cost_val))
 
                 ##############################################################################
                 # At the optimum of the generator, the probability for the discriminator
