@@ -1,5 +1,3 @@
-from __future__ import annotations
-
 import json
 import statistics
 from dataclasses import dataclass
@@ -226,7 +224,7 @@ class Trainer:
         print("Weights:", json.dumps(self.last_run_generator_weights, default=__json_default, indent=2))
         return self.last_run_generator_weights
 
-    def __update_best_generator_weights(self, weight_snapshot: WeightSnapshot, replace: bool = True):
+    def __update_best_generator_weights(self, weight_snapshot: 'WeightSnapshot', replace: bool = True):
         if not replace \
                 or not self.last_run_generator_weights \
                 or weight_snapshot.is_better_than(self.last_run_generator_weights[-1]):
@@ -235,7 +233,7 @@ class Trainer:
             self.last_run_generator_weights.append(weight_snapshot)
 
     def __get_probs_and_update_snapshots(self, gen_weights: np.array, disc_weights: np.array, epoch: int,
-                                         snapshot_interval_epochs: int, label: TrainingPhaseLabel):
+                                         snapshot_interval_epochs: int, label: 'TrainingPhaseLabel'):
         prob_fake_real = statistics.mean(
             [self.prob_fake_true(gen_weights, disc_weights, g).numpy()[0][0] for g in self.g_values])
         prob_real_real = statistics.mean([self.prob_real_true(disc_weights, g).numpy()[0][0] for g in self.g_values])
@@ -261,5 +259,5 @@ class WeightSnapshot(object):
     epoch: int
     label: TrainingPhaseLabel
 
-    def is_better_than(self, other: WeightSnapshot) -> bool:
+    def is_better_than(self, other: 'WeightSnapshot') -> bool:
         return self.prob_fake_real >= other.prob_fake_real
