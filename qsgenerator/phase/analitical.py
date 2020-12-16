@@ -61,6 +61,6 @@ def get_theta_r(g):
 
 def get_g_parameters_provider():
     def provider(g):
-        return [get_theta_v(g), get_theta_w(g), get_theta_r(g)]
+        return [get_theta_r(g), get_theta_v(g), get_theta_w(g)]
 
     return provider

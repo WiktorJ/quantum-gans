@@ -5,12 +5,13 @@ from cirq.type_workarounds import NotImplementedType
 from typing import Union, Iterable
 
 
-def build_ground_state_circuit(size=None, qubits=None, full_circuit=True):
+def build_ground_state_circuit(size=None, qubits=None, full_circuit=True, full_parametrization=False):
     """
     Builds the circuit necessary to generate ground state
     :param size: circuit size
     :param qubits: qubits to create the SPT circuit
-    :param full_circuit: if False boundary qubits will be added, if True not are used
+    :param full_circuit: if False boundary qubits will be added, if True the provided are used
+    :param full_parametrization: if True all parametrized gates get separate symbol
     :return: cirq Circuit
     """
 
@@ -32,15 +33,25 @@ def build_ground_state_circuit(size=None, qubits=None, full_circuit=True):
     # theta_v: symbol for V tilda gate parametrization
     # theta_w: symbol for W tilda gate parametrization
     # theta_r: symbol for R tilda gate parametrization
-    theta_v, theta_w, theta_r = sympy.symbols("theta_v, theta_w, theta_r")
+    thetas = sympy.symbols("theta_r, theta_v, theta_w" if not full_parametrization
+                           else f"theta:{((circuit_size - 2) * 4) + 1}")
     circuit = cirq.Circuit()
 
-    circuit.append([build_u1_gate(qubits[0], qubits[1], theta_r)])
+    circuit.append([build_u1_gate(qubits[0], qubits[1], thetas[0])])
 
-    for i in range(1, circuit_size - 1):
-        circuit.append(build_u_gate(qubits[i], qubits[i + 1], theta_v, theta_w))
+    for i in range(0, circuit_size - 2):
+        if full_parametrization:
+            circuit.append(
+                build_u_gate(qubits[i + 1],
+                             qubits[i + 2],
+                             thetas[(i * 4) + 1],
+                             thetas[(i * 4) + 2],
+                             thetas[(i * 4) + 3],
+                             thetas[(i * 4) + 4]))
+        else:
+            circuit.append(build_u_gate(qubits[i + 1], qubits[i + 2], thetas[1], thetas[1], thetas[2], thetas[2]))
 
-    return circuit, (theta_v, theta_w, theta_r)
+    return circuit, thetas
 
 
 def build_u1_gate(q1, q2, theta_r):
@@ -55,17 +66,17 @@ def build_u1_gate(q1, q2, theta_r):
     return u1
 
 
-def build_u_gate(q1, q2, theta_v, theta_w):
+def build_u_gate(q1, q2, theta_v, theta_vt, theta_w, theta_wt):
     return cirq.Circuit(
         cirq.X(q1),
         *_get_wv_tilda_gate(q2, theta_w),
         cirq.CNOT(q1, q2),
         cirq.X(q1),
-        *_get_wv_tilda_transpose_gate(q2, theta_w),
+        *_get_wv_tilda_transpose_gate(q2, theta_wt),
         *_get_wv_tilda_gate(q2, theta_v),
         cirq.CNOT(q1, q2),
         cirq.X(q1),
-        *_get_wv_tilda_transpose_gate(q2, theta_v),
+        *_get_wv_tilda_transpose_gate(q2, theta_vt),
     )
 
 
