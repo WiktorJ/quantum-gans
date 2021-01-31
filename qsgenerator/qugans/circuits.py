@@ -4,26 +4,37 @@ import sympy
 
 def build_gan_circuits(generator_layers: int, discriminator_layers: int, data_bus_size: int,
                        full_layer_labeling: bool = True, all_layers_labeling: bool = False,
-                       use_gen_label_qubit: bool = False):
-    total_size = data_bus_size + 2
+                       use_gen_label_qubit: bool = False, use_disc_label_qubit: bool = False):
+    total_size = data_bus_size + 1
+    disc_exclusive_qubits = 1
     if use_gen_label_qubit:
         total_size += 1
+    if use_disc_label_qubit:
+        total_size += 1
+        disc_exclusive_qubits += 1
+
 
     qubits = cirq.GridQubit.rect(1, total_size)
-    out_qubit, label_disc_qubit = qubits[0], qubits[1]
+    out_qubit = qubits[0]
     if use_gen_label_qubit:
-        data_qubits = qubits[2:-1]
+        data_qubits = qubits[disc_exclusive_qubits:-1]
         label_gen_qubit = qubits[-1]
     else:
-        data_qubits = qubits[2:]
+        data_qubits = qubits[disc_exclusive_qubits:]
         label_gen_qubit = None
+
+    if use_disc_label_qubit:
+        label_disc_qubit = qubits[1]
+    else:
+        label_disc_qubit = None
+
     ls = sympy.symbols("l")
     gen_qubits = data_qubits + ([label_gen_qubit] if label_gen_qubit else [])
+    disc_qubits = [out_qubit] + ([label_disc_qubit] if label_disc_qubit else []) + data_qubits
     gen, gen_symbols = build_circuit(generator_layers, label_gen_qubit, gen_qubits, ls, "g",
                                      full_layer_labeling, all_layers_labeling)
-    disc, disc_symbols = build_circuit(discriminator_layers, label_disc_qubit,
-                                       [out_qubit, label_disc_qubit] + data_qubits, ls, "d", full_layer_labeling,
-                                       all_layers_labeling)
+    disc, disc_symbols = build_circuit(discriminator_layers, label_disc_qubit, disc_qubits, ls, "d",
+                                       full_layer_labeling, all_layers_labeling)
     return gen, gen_symbols, disc, disc_symbols, ls, data_qubits, out_qubit
 
 
