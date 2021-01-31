@@ -83,5 +83,4 @@ def _build_layer(label_qubit, data_qubits, label_symbol, data_symbols, full_laye
         layer.append([cirq.ZZ(data_qubits[j], data_qubits[j + 1]) ** data_symbols[i]])
         j += 2
         i += 1
-
     return layer
