@@ -242,7 +242,7 @@ class Trainer:
         prob_real_real = statistics.mean([self.prob_real_true(disc_weights, g).numpy()[0][0] for g in self.g_values])
 
         self.__update_best_generator_weights(
-            WeightSnapshot(gen_weights, disc_weights, prob_fake_real, prob_real_real, epoch, label),
+            WeightSnapshot(gen_weights[:], disc_weights[:], prob_fake_real, prob_real_real, epoch, label),
             epoch % snapshot_interval_epochs != 0)
 
         return prob_fake_real, prob_real_real
