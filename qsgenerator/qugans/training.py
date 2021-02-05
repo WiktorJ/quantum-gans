@@ -28,16 +28,13 @@ class Trainer:
                  real_symbols: Tuple[sympy.Symbol],
                  ls: sympy.Symbol,
                  real_values_provider: Callable,
-                 generator_label_value_provider: Callable = None,
-                 real_label_value_provider: Callable = None,
+                 label_value_provider: Callable = None,
                  use_analytical_expectation=False,
                  sampling_repetitions=500,
                  gradient_method_provider=None):
-        gradient_method_provider = gradient_method_provider if gradient_method_provider is not None else lambda: tfq.differentiators.ForwardDifference()
-        self.generator_label_value_provider = generator_label_value_provider \
-            if generator_label_value_provider is not None else lambda *args: [map_to_radians(*args)]
-        self.real_label_value_provider = real_label_value_provider \
-            if real_label_value_provider is not None else lambda *args: [map_to_radians(*args)]
+        gradient_method_provider = gradient_method_provider if gradient_method_provider else lambda: tfq.differentiators.ForwardDifference()
+        self.label_value_provider = label_value_provider \
+            if label_value_provider else lambda *args: [map_to_radians(*args)]
         self.real_values_provider = real_values_provider
         self.sampling_repetitions = sampling_repetitions
         self.use_analytical_expectation = use_analytical_expectation
@@ -70,7 +67,7 @@ class Trainer:
             np.array(self.real_values_provider(g),
                      dtype=np.float32),
             disc_weights,
-            np.array(self.real_label_value_provider(g), dtype=np.float32)
+            np.array(self.label_value_provider(g), dtype=np.float32)
         ])
         return self.disc_expectation([self.real],
                                      symbol_names=self.real_symbols + self.ds + ((self.ls,) if self.ls else ()),
@@ -84,7 +81,7 @@ class Trainer:
         full_weights = tf.keras.layers.Concatenate(axis=0)([
             disc_weights,
             gen_weights,
-            np.array(self.generator_label_value_provider(g), dtype=np.float32)
+            np.array(self.label_value_provider(g), dtype=np.float32)
         ])
         full_weights = tf.reshape(full_weights, (1, full_weights.shape[0]))
         return self.gen_expectation([self.gen],

@@ -4,9 +4,10 @@ import numpy as np
 
 class CircuitEvaluator:
 
-    def __init__(self, circuit, symbols) -> None:
+    def __init__(self, circuit, symbols, label_value_provider) -> None:
         self.symbols = symbols
         self.circuit = circuit
+        self.label_value_provider = label_value_provider
 
     def get_state(self, resolver: cirq.ParamResolver, trace_dims: list = None, max_traced: bool = True):
         state_vector = cirq.final_state_vector(cirq.resolve_parameters(self.circuit, resolver))
