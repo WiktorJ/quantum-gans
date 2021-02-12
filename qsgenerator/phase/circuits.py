@@ -5,7 +5,7 @@ from cirq.type_workarounds import NotImplementedType
 from typing import Union, Iterable
 
 
-def build_ground_state_circuit(size=None, qubits=None, full_circuit=True, full_parametrization=False):
+def build_ground_state_circuit(size=None, qubits=None, full_circuit=True, full_parametrization=False, zxz=False):
     """
     Builds the circuit necessary to generate ground state
     :param size: circuit size
@@ -33,32 +33,44 @@ def build_ground_state_circuit(size=None, qubits=None, full_circuit=True, full_p
     # theta_v: symbol for V tilda gate parametrization
     # theta_w: symbol for W tilda gate parametrization
     # theta_r: symbol for R tilda gate parametrization
-    thetas = sympy.symbols("theta_r, theta_v, theta_w" if not full_parametrization
-                           else f"theta:{((circuit_size - 2) * 4) + 1}")
+
+    if not full_parametrization:
+        thetas = sympy.symbols("theta_r, theta_v, theta_w")
+    else:
+        size = ((circuit_size - 2) * 4) + 1
+        if zxz:
+            size *= 3
+        thetas = sympy.symbols(f"theta:{size}")
+
     circuit = cirq.Circuit()
 
-    circuit.append([build_u1_gate(qubits[0], qubits[1], thetas[0])])
+    multiplier = 3 if zxz else 1
+    y_supplier = _zxz_ry if zxz else _default_ry
 
+    circuit.append([build_u1_gate(qubits[0], qubits[1], thetas[0:multiplier], y_supplier)])
+    base = 0
     for i in range(0, circuit_size - 2):
         if full_parametrization:
             circuit.append(
                 build_u_gate(qubits[i + 1],
                              qubits[i + 2],
-                             thetas[(i * 4) + 1],
-                             thetas[(i * 4) + 2],
-                             thetas[(i * 4) + 3],
-                             thetas[(i * 4) + 4]))
+                             thetas[multiplier + base: (2 * multiplier) + base],
+                             thetas[(2 * multiplier) +  base: (3 * multiplier) +  base],
+                             thetas[(3 * multiplier) +  base: (4 * multiplier) +  base],
+                             thetas[(4 * multiplier) +  base: (5 * multiplier) +  base], y_supplier))
+
+            base += 4 * base
         else:
-            circuit.append(build_u_gate(qubits[i + 1], qubits[i + 2], thetas[1], thetas[1], thetas[2], thetas[2]))
+            circuit.append(build_u_gate(qubits[i + 1], qubits[i + 2], thetas[1:2], thetas[1:2], thetas[2:3], thetas[2:3], _default_ry))
 
     return circuit, thetas
 
 
-def build_u1_gate(q1, q2, theta_r):
+def build_u1_gate(q1, q2, theta_r, y_supplier):
     u1 = cirq.Circuit(
         cirq.H(q1),
         cirq.CNOT(q1, q2),
-        *_get_r_gate(q2, theta_r)
+        *_get_r_gate(q2, theta_r, y_supplier)
     )
 
     # For g > 0
@@ -66,30 +78,38 @@ def build_u1_gate(q1, q2, theta_r):
     return u1
 
 
-def build_u_gate(q1, q2, theta_v, theta_vt, theta_w, theta_wt):
+def build_u_gate(q1, q2, theta_v, theta_vt, theta_w, theta_wt, ry_supplier):
     return cirq.Circuit(
         cirq.X(q1),
-        *_get_wv_tilda_gate(q2, theta_w),
+        *_get_wv_tilda_gate(q2, theta_w, ry_supplier),
         cirq.CNOT(q1, q2),
         cirq.X(q1),
-        *_get_wv_tilda_transpose_gate(q2, theta_wt),
-        *_get_wv_tilda_gate(q2, theta_v),
+        *_get_wv_tilda_transpose_gate(q2, theta_wt, ry_supplier),
+        *_get_wv_tilda_gate(q2, theta_v, ry_supplier),
         cirq.CNOT(q1, q2),
         cirq.X(q1),
-        *_get_wv_tilda_transpose_gate(q2, theta_vt),
+        *_get_wv_tilda_transpose_gate(q2, theta_vt, ry_supplier),
     )
 
 
-def _get_wv_tilda_gate(q, theta):
-    return [cirq.ry(theta).on(q)]
+def _get_wv_tilda_gate(q, theta, ry_supplier):
+    return ry_supplier(q, theta)
 
 
-def _get_wv_tilda_transpose_gate(q, theta):
-    return [cirq.X(q), cirq.ry(theta).on(q), cirq.X(q)]
+def _get_wv_tilda_transpose_gate(q, theta, ry_supplier):
+    return [cirq.X(q)] + ry_supplier(q, theta) + [cirq.X(q)]
 
 
-def _get_r_gate(q, theta):
-    return [cirq.Z(q), cirq.ry(theta).on(q)]
+def _get_r_gate(q, theta, ry_supplier):
+    return [cirq.Z(q)] + ry_supplier(q, theta)
+
+
+def _default_ry(q, theta):
+    return [cirq.ry(theta[0]).on(q)]
+
+
+def _zxz_ry(q, thetas):
+    return [cirq.rz(thetas[0]).on(q), cirq.rx(thetas[1]).on(q), cirq.rz(thetas[2]).on(q)]
 
 
 class U3(cirq.Gate):
