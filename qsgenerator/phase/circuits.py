@@ -58,8 +58,8 @@ def build_ground_state_circuit(size=None, qubits=None, full_circuit=True, full_p
                              thetas[(2 * multiplier) +  base: (3 * multiplier) +  base],
                              thetas[(3 * multiplier) +  base: (4 * multiplier) +  base],
                              thetas[(4 * multiplier) +  base: (5 * multiplier) +  base], y_supplier))
-
-            base += 4 * base
+            base += (4 * multiplier)
+            print(base, len(thetas))
         else:
             circuit.append(build_u_gate(qubits[i + 1], qubits[i + 2], thetas[1:2], thetas[1:2], thetas[2:3], thetas[2:3], _default_ry))
 
