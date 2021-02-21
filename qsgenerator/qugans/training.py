@@ -1,5 +1,6 @@
 import json
 import statistics
+import neptune
 from dataclasses import dataclass
 from enum import Enum
 from typing import Callable, Tuple, Iterable
@@ -31,8 +32,10 @@ class Trainer:
                  label_value_provider: Callable = None,
                  use_analytical_expectation=False,
                  sampling_repetitions=500,
-                 gradient_method_provider=None):
+                 gradient_method_provider=None,
+                 use_neptune=False):
         gradient_method_provider = gradient_method_provider if gradient_method_provider else lambda: tfq.differentiators.ForwardDifference()
+        self.use_neptune = use_neptune
         self.label_value_provider = label_value_provider \
             if label_value_provider else lambda *args: [map_to_radians(*args)]
         self.real_values_provider = real_values_provider
@@ -145,7 +148,7 @@ class Trainer:
                 disc_weights,
                 epoch,
                 snapshot_interval_epochs,
-                TrainingPhaseLabel.DISCRIMINATOR
+                TrainingPhaseLabel.DISCRIMINATOR,
             )
             plotter.on_epoch_end(disc_cost_val, gen_cost_val, prob_fake_real, prob_real_real)
             if epoch % snapshot_interval_epochs == 0:
@@ -221,8 +224,17 @@ class Trainer:
 
         print("-------------------------------------")
         print("----------- TRAINING DONE -----------")
-        print("Weights:", json.dumps(self.last_run_generator_weights, default=__json_default, indent=2))
-        return self.last_run_generator_weights
+        json_result = json.dumps(self.last_run_generator_weights, default=__json_default, indent=2)
+        return self.last_run_generator_weights, json_result
+
+    def get_params_and_results(self):
+        return {
+            "g_values": self.g_values,
+            "size": self.size,
+            "disc": self.disc,
+            "gen": self.gen,
+            "weights": [el.__dict__ for el in self.last_run_generator_weights]
+        }
 
     def __update_best_generator_weights(self, weight_snapshot: 'WeightSnapshot', replace: bool = True):
         if not replace \
@@ -239,9 +251,12 @@ class Trainer:
         prob_real_real = statistics.mean([self.prob_real_true(disc_weights, g).numpy()[0][0] for g in self.g_values])
 
         self.__update_best_generator_weights(
-            WeightSnapshot(gen_weights[:].numpy(), disc_weights[:].numpy(), prob_fake_real, prob_real_real, epoch, label),
+            WeightSnapshot(gen_weights[:].numpy(), disc_weights[:].numpy(), prob_fake_real, prob_real_real, epoch,
+                           label),
             epoch % snapshot_interval_epochs != 0)
-
+        if self.use_neptune:
+            neptune.log_metric("prob_fake_real", prob_fake_real)
+            neptune.log_metric("prob_real_real", prob_real_real)
         return prob_fake_real, prob_real_real
 
 
