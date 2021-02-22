@@ -1,3 +1,6 @@
+import functools
+from collections import defaultdict
+
 import cirq
 import sympy
 import numpy as np
@@ -44,8 +47,9 @@ def build_ground_state_circuit(size=None, qubits=None, full_circuit=True, full_p
 
     circuit = cirq.Circuit()
 
+    symbols_dict = defaultdict(set)
     multiplier = 3 if zxz else 1
-    y_supplier = _zxz_ry if zxz else _default_ry
+    y_supplier = _get_zxz_ry(symbols_dict) if zxz else _get_default_ry(symbols_dict)
 
     circuit.append([build_u1_gate(qubits[0], qubits[1], thetas[0:multiplier], y_supplier)])
     base = 0
@@ -62,9 +66,9 @@ def build_ground_state_circuit(size=None, qubits=None, full_circuit=True, full_p
         else:
             circuit.append(
                 build_u_gate(qubits[i + 1], qubits[i + 2], thetas[1:2], thetas[1:2], thetas[2:3], thetas[2:3],
-                             _default_ry))
+                             y_supplier))
 
-    return circuit, thetas
+    return circuit, thetas, symbols_dict
 
 
 def build_u1_gate(q1, q2, theta_r, y_supplier):
@@ -105,12 +109,22 @@ def _get_r_gate(q, theta, ry_supplier):
     return [cirq.Z(q)] + ry_supplier(q, theta)
 
 
-def _default_ry(q, theta):
-    return [cirq.ry(theta[0]).on(q)]
+def _get_default_ry(symbols_dict):
+    def _default_ry(q, theta):
+        symbols_dict['y'].add(theta[0])
+        return [cirq.ry(theta[0]).on(q)]
+
+    return _default_ry
 
 
-def _zxz_ry(q, thetas):
-    return [cirq.rz(thetas[0]).on(q), cirq.rx(thetas[1]).on(q), cirq.rz(thetas[2]).on(q)]
+def _get_zxz_ry(symbols_dict):
+    def _zxz_ry(q, thetas):
+        symbols_dict['z1'].add(thetas[0])
+        symbols_dict['x'].add(thetas[1])
+        symbols_dict['z2'].add(thetas[2])
+        return [cirq.rz(thetas[0]).on(q), cirq.rx(thetas[1]).on(q), cirq.rz(thetas[2]).on(q)]
+
+    return _zxz_ry
 
 
 class U3(cirq.Gate):

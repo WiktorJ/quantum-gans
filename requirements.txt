@@ -8,4 +8,4 @@ numpy==1.18.5
 setuptools==49.2.1
 ipython==7.18.1
 scipy==1.5.3
-neptun
+neptune-client
