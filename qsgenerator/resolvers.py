@@ -1,4 +1,4 @@
-from typing import List, Union, Dict, Set, Tuple
+from typing import Union, Dict, Set, Tuple
 
 import cirq
 import sympy

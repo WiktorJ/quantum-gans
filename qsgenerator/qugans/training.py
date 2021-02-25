@@ -217,10 +217,9 @@ class Trainer:
                 return obj.__dict__
             if isinstance(obj, TrainingPhaseLabel):
                 return obj.name
-            elif type(obj) in (str, int, bool, float):
+            if type(obj) in (str, int, bool, float):
                 return obj
-            else:
-                return obj.__repr__()
+            return obj.__repr__()
 
         print("-------------------------------------")
         print("----------- TRAINING DONE -----------")
@@ -251,8 +250,8 @@ class Trainer:
         prob_real_real = statistics.mean([self.prob_real_true(disc_weights, g).numpy()[0][0] for g in self.g_values])
 
         self.__update_best_generator_weights(
-            WeightSnapshot(gen_weights[:].numpy(), disc_weights[:].numpy(), prob_fake_real, prob_real_real, epoch,
-                           label),
+            WeightSnapshot(gen_weights[:].numpy(), self.gs, disc_weights[:].numpy(), self.ds, prob_fake_real,
+                           prob_real_real, epoch, label),
             epoch % snapshot_interval_epochs != 0)
         if self.use_neptune:
             neptune.log_metric("prob_fake_real", prob_fake_real)
@@ -265,14 +264,23 @@ class TrainingPhaseLabel(Enum):
     DISCRIMINATOR = 2
 
 
-@dataclass
 class WeightSnapshot(object):
-    gen_weights: np.array
-    disc_weights: np.array
-    prob_fake_real: float
-    prob_real_real: float
-    epoch: int
-    label: TrainingPhaseLabel
+
+    def __init__(self,
+                 gen_weights: np.array,
+                 gen_symbols: Tuple[sympy.Symbol],
+                 disc_weights: np.array,
+                 disc_symbols: Tuple[sympy.Symbol],
+                 prob_fake_real: float,
+                 prob_real_real: float,
+                 epoch: int,
+                 label: TrainingPhaseLabel) -> None:
+        self.gen_pairs = {el[0].name: el[1] for el in zip(gen_symbols, gen_weights)}
+        self.disc_pairs = {el[0].name: el[1] for el in zip(disc_symbols, disc_weights)}
+        self.prob_fake_real = prob_fake_real
+        self.prob_real_real = prob_real_real
+        self.epoch = epoch
+        self.label = label
 
     def is_better_than(self, other: 'WeightSnapshot') -> bool:
         return self.get_dist_from_eq() <= other.get_dist_from_eq()
