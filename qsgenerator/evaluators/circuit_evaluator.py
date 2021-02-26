@@ -17,6 +17,7 @@ class CircuitEvaluator:
         if symbols:
             symbol_value_pairs = {symbol: symbol_value_pairs[symbol.name] for symbol in symbols}
         self.symbol_value_pairs = symbol_value_pairs if symbol_value_pairs else {}
+        self.symbol_value_pairs = {el[0]: float(el[1]) for el in self.symbol_value_pairs.items()}
         self.label_symbols = label_symbols
         self.circuit = circuit
 
