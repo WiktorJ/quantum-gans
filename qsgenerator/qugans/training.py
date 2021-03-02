@@ -321,7 +321,7 @@ class WeightSnapshot(object):
         return (((self.prob_fake_real - 0.5) ** 2) + ((self.prob_real_real - 0.5) ** 2)) ** 0.5
 
     def get_fidelity_l2_norm(self):
-        return np.linalg.norm(self.fidelities.values())
+        return np.linalg.norm(list(self.fidelities.values()))
 
     def get_serializable_dict(self):
         return self.__dict__
