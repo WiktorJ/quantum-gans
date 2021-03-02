@@ -36,7 +36,8 @@ class Trainer:
                  use_analytical_expectation=False,
                  sampling_repetitions=500,
                  gradient_method_provider=None,
-                 use_neptune=False):
+                 use_neptune=False,
+                 compare_on_fidelity=True):
         gradient_method_provider = gradient_method_provider if gradient_method_provider else lambda: tfq.differentiators.ForwardDifference()
         self.use_neptune = use_neptune
         self.label_value_provider = label_value_provider \
@@ -56,6 +57,7 @@ class Trainer:
         self.g_values = list(g_values)
         self.g_provider = lambda: np.random.choice(self.g_values)
         self.last_run_generator_weights = []
+        self.compare_on_fidelity = compare_on_fidelity
         if use_analytical_expectation:
             self.disc_expectation = tfq.layers.Expectation(differentiator=gradient_method_provider())
             self.gen_expectation = tfq.layers.Expectation(differentiator=gradient_method_provider())
@@ -275,7 +277,8 @@ class Trainer:
 
         fidelities = {el: self.get_states_and_fidelty_for_real(el)[2] for el in self.g_values}
 
-        snap = WeightSnapshot(gen_pairs, disc_pairs, prob_fake_real, prob_real_real, epoch, label, fidelities)
+        snap = WeightSnapshot(gen_pairs, disc_pairs, prob_fake_real, prob_real_real, epoch, label, fidelities,
+                              self.compare_on_fidelity)
         self.__update_best_generator_weights(
             snap,
             epoch % snapshot_interval_epochs != 0)
@@ -299,7 +302,8 @@ class WeightSnapshot(object):
                  prob_real_real: float,
                  epoch: int,
                  label: TrainingPhaseLabel,
-                 fidelities: Dict[str, float]) -> None:
+                 fidelities: Dict[str, float],
+                 compare_on_fidelity: bool = True) -> None:
         self.gen_pairs = {el[0].name: el[1] for el in gen_pairs.items()}
         self.disc_pairs = {el[0].name: el[1] for el in disc_pairs.items()}
         self.prob_fake_real = prob_fake_real
@@ -307,12 +311,17 @@ class WeightSnapshot(object):
         self.epoch = epoch
         self.label = label
         self.fidelities = fidelities
+        self.compare_on_fidelity = compare_on_fidelity
 
     def is_better_than(self, other: 'WeightSnapshot') -> bool:
-        return self.get_dist_from_eq() <= other.get_dist_from_eq()
+        return self.get_fidelity_l2_norm() >= other.get_fidelity_l2_norm() if self.compare_on_fidelity \
+            else self.get_dist_from_eq_prob() <= other.get_dist_from_eq_prob()
 
-    def get_dist_from_eq(self):
+    def get_dist_from_eq_prob(self):
         return (((self.prob_fake_real - 0.5) ** 2) + ((self.prob_real_real - 0.5) ** 2)) ** 0.5
+
+    def get_fidelity_l2_norm(self):
+        return np.linalg.norm(self.fidelities.values())
 
     def get_serializable_dict(self):
         return self.__dict__
