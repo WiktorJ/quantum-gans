@@ -136,7 +136,8 @@ class Trainer:
               disc_iteration=100,
               gen_iteration=2,
               snapshot_interval_epochs=20,
-              print_weights=False):
+              print_weights=False,
+              early_stop_fidelity_threshold=None):
         if disc_cost is None:
             disc_cost = lambda: self.default_disc_cost(disc_weights, gen_weights)
         if gen_cost is None:
@@ -214,6 +215,12 @@ class Trainer:
                 if print_weights:
                     print("Generator weights:", gen_weights)
                     print("Discriminator weights", disc_weights)
+            if early_stop_fidelity_threshold is not None \
+                    and self.last_run_generator_weights \
+                    and self.last_run_generator_weights[-1].get_fidelity_l2_norm() > early_stop_fidelity_threshold:
+                print(f"The latest fidelity norm is {self.last_run_generator_weights[-1].get_fidelity_l2_norm()} "
+                      f"early stopping the training")
+                break
 
         def __json_default(obj):
             if isinstance(obj, np.ndarray):
