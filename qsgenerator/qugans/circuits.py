@@ -84,14 +84,14 @@ def _build_layer(label_qubit, data_qubits, label_symbol, data_symbols, full_laye
     # Add first moment of ZZ two qubit gates starting from 0th qubit
     j = 0
     while j < len(data_qubits) - 1:
-        layer.append([cirq.ZZ(data_qubits[j], data_qubits[j + 1]) ** data_symbols[i]])
+        layer.append([cirq.ZZPowGate(exponent=data_symbols[i], global_shift=-0.5).on(data_qubits[j], data_qubits[j + 1])])
         j += 2
         i += 1
 
     # Add second moment of ZZ two qubit gates starting from 1st qubit
     j = 1
     while j < len(data_qubits) - 1:
-        layer.append([cirq.ZZ(data_qubits[j], data_qubits[j + 1]) ** data_symbols[i]])
+        layer.append([cirq.ZZPowGate(exponent=data_symbols[i], global_shift=-0.5).on(data_qubits[j], data_qubits[j + 1])])
         j += 2
         i += 1
     return layer
