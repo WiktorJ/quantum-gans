@@ -1,7 +1,6 @@
 import json
 import statistics
 import neptune
-from dataclasses import dataclass
 from enum import Enum
 from typing import Callable, Tuple, Iterable, Dict, List
 

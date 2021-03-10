@@ -23,7 +23,7 @@ class CircuitEvaluator:
 
     def get_state(self, resolver: cirq.ParamResolver, trace_dims: list = None, max_traced: bool = True):
         state_vector = cirq.final_state_vector(cirq.resolve_parameters(self.circuit, resolver))
-        if trace_dims:
+        if trace_dims and len(trace_dims) < self.get_circuit_size():
             state_vector = cirq.partial_trace_of_state_vector_as_mixture(state_vector, trace_dims)
             if max_traced:
                 prob, state_vector = max(state_vector, key=lambda el: el[0])
@@ -45,3 +45,6 @@ class CircuitEvaluator:
         else:
             params = self.symbol_value_pairs
         return cirq.ParamResolver(params)
+
+    def get_circuit_size(self):
+        return len(self.circuit.qid_shape())
