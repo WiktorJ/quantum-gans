@@ -87,7 +87,7 @@ class PhaseCircuitBuilder:
         )
 
         # For g > 0
-        #     u1 = u1.append([cirq.H(q2), cirq.CNOT(q1, q2), cirq.H(q2)])
+        u1.append([cirq.H(q2), cirq.CNOT(q1, q2), cirq.H(q2)])
         return u1
 
     def build_u_gate(self, q1, q2, theta_v, theta_vt, theta_w, theta_wt, ry_supplier):

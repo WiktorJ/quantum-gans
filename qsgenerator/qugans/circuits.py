@@ -3,24 +3,24 @@ import sympy
 
 
 def build_gan_circuits(generator_layers: int, discriminator_layers: int, data_bus_size: int,
+                       generator_bath_size: int = 0, discriminator_bath_size: int = 0,
                        full_layer_labeling: bool = True, all_layers_labeling: bool = False,
                        use_gen_label_qubit: bool = False, use_disc_label_qubit: bool = False):
-    total_size = data_bus_size + 1
-    disc_exclusive_qubits = 1
+    total_size = data_bus_size + generator_bath_size + discriminator_bath_size + 1
+    disc_exclusive_qubits = discriminator_bath_size + 1
     if use_gen_label_qubit:
         total_size += 1
     if use_disc_label_qubit:
         total_size += 1
         disc_exclusive_qubits += 1
 
-
     qubits = cirq.GridQubit.rect(1, total_size)
     out_qubit = qubits[0]
     if use_gen_label_qubit:
-        data_qubits = qubits[disc_exclusive_qubits:-1]
+        data_qubits = qubits[disc_exclusive_qubits:-(generator_bath_size + 1)]
         label_gen_qubit = qubits[-1]
     else:
-        data_qubits = qubits[disc_exclusive_qubits:]
+        data_qubits = qubits[disc_exclusive_qubits:-generator_bath_size]
         label_gen_qubit = None
 
     if use_disc_label_qubit:
@@ -29,8 +29,10 @@ def build_gan_circuits(generator_layers: int, discriminator_layers: int, data_bu
         label_disc_qubit = None
 
     ls = sympy.symbols("l")
-    gen_qubits = data_qubits + ([label_gen_qubit] if label_gen_qubit else [])
-    disc_qubits = [out_qubit] + ([label_disc_qubit] if label_disc_qubit else []) + data_qubits
+    gen_qubits = data_qubits + ([label_gen_qubit] if label_gen_qubit else []) + qubits[
+                                                                                total_size - generator_bath_size:]
+    disc_qubits = [out_qubit] + qubits[1:discriminator_bath_size + 1] + (
+        [label_disc_qubit] if label_disc_qubit else []) + data_qubits
     gen, gen_symbols = build_circuit(generator_layers, label_gen_qubit, gen_qubits, ls, "g",
                                      full_layer_labeling, all_layers_labeling)
     disc, disc_symbols = build_circuit(discriminator_layers, label_disc_qubit, disc_qubits, ls, "d",
@@ -84,14 +86,15 @@ def _build_layer(label_qubit, data_qubits, label_symbol, data_symbols, full_laye
     # Add first moment of ZZ two qubit gates starting from 0th qubit
     j = 0
     while j < len(data_qubits) - 1:
-        layer.append([cirq.ZZPowGate(exponent=data_symbols[i], global_shift=-0.5).on(data_qubits[j], data_qubits[j + 1])])
+        layer.append(
+            [cirq.ZZPowGate(exponent=data_symbols[i], global_shift=-0.5).on(data_qubits[j], data_qubits[j + 1])])
         j += 2
         i += 1
-    cirq.CNotPowGate
     # Add second moment of ZZ two qubit gates starting from 1st qubit
     j = 1
     while j < len(data_qubits) - 1:
-        layer.append([cirq.ZZPowGate(exponent=data_symbols[i], global_shift=-0.5).on(data_qubits[j], data_qubits[j + 1])])
+        layer.append(
+            [cirq.ZZPowGate(exponent=data_symbols[i], global_shift=-0.5).on(data_qubits[j], data_qubits[j + 1])])
         j += 2
         i += 1
     return layer
