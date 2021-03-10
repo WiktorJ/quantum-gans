@@ -250,7 +250,7 @@ class Trainer:
         }
 
     def get_states_and_fidelty_for_real(self, g):
-        generated = self.gen_evaluator.get_state_from_params()
+        generated = self.gen_evaluator.get_state_from_params(trace_dims=list(range(self.size)))
         real = self.real_evaluator.get_state_from_params(g)
         return generated, real, cirq.fidelity(generated, real)
 
