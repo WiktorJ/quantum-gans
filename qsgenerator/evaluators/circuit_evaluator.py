@@ -28,6 +28,7 @@ class CircuitEvaluator:
             if max_traced:
                 prob, state_vector = max(state_vector, key=lambda el: el[0])
                 print(f"Max probability state after tracing has probability: {prob}")
+                return state_vector, prob
         return state_vector
 
     def get_state_from_params(self, labels=None, trace_dims: list = None, max_traced: bool = True):
