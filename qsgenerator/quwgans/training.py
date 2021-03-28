@@ -68,10 +68,12 @@ class Trainer:
             w, h, c = self.find_max_w_h_pairs()
             # TODO: Normalize w per qubit
             em_distance = sum(x * y for x, y in zip(w, c))
-            fidelities = {el: (self.get_states_and_fidelty_for_real(el)[2], self.get_states_and_fidelty_for_real(el)[3])
-                          for el in self.g_values}
+            states_and_fidelity = [(el, self.get_states_and_fidelty_for_real(el)) for el in self.g_values]
+            fidelities = {g: s[2] for g, s in states_and_fidelity}
+            abs_fidelities = {g: s[3] for g, s in states_and_fidelity}
+
             if plot:
-                plotter.plot_quwgans(em_distance, fidelities, epoch % snapshot_interval_epochs == 0)
+                plotter.plot_quwgans(em_distance, fidelities, abs_fidelities, epoch % snapshot_interval_epochs == 0)
 
             if epoch % snapshot_interval_epochs == 0:
                 print("----------------------------------------------------")
@@ -81,6 +83,7 @@ class Trainer:
 
                 for k, v in fidelities.items():
                     print(f"Fidelity for g={k} : {v[0]}")
+                for k, v in abs_fidelities.items():
                     print(f"Fidelity modulo for g={k} : {v[1]}")
 
             for step in range(gen_iteration):

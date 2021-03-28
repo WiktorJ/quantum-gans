@@ -48,11 +48,12 @@ class Plotter:
             fig.tight_layout()
             plt.show()
 
-    def plot_quwgans(self, em_distance, fidelities, refresh):
+    def plot_quwgans(self, em_distance, fidelities, abs_fidelities, refresh):
         self.x.append(self.i)
         for item in fidelities.items():
-            self.fidelities_history[item[0]].append(item[1][0])
-            self.abs_fidelities_history[item[0]].append(item[1][1])
+            self.fidelities_history[item[0]].append(item[1])
+        for item in abs_fidelities.items():
+            self.abs_fidelities_history[item[0]].append(item[1])
         self.em_distance_history.append(em_distance)
         self.i += 1
         if refresh:

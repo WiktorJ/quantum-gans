@@ -251,11 +251,16 @@ class Trainer:
         }
 
     def get_states_and_fidelty_for_real(self, g):
-        generated, max_trace_prob = self.gen_evaluator.get_state_from_params(trace_dims=list(range(self.size)))
-        if self.use_neptune:
+        state = self.gen_evaluator.get_state_from_params(trace_dims=list(range(self.size)))
+        if isinstance(state, tuple):
+            generated, max_trace_prob = state
+        else:
+            generated = state
+            max_trace_prob = None
+        if self.use_neptune and max_trace_prob:
             neptune.log_metric("max_trace_prob", max_trace_prob)
         real = self.real_evaluator.get_state_from_params(g)
-        return generated, real, cirq.fidelity(generated, real)
+        return generated, real, cirq.fidelity(generated, real), cirq.fidelity(abs(generated), abs(real))
 
     def __update_best_generator_weights(self, weight_snapshot: 'WeightSnapshot', replace: bool = True):
         if not replace \
@@ -285,9 +290,11 @@ class Trainer:
 
         self.__update_evaluators(gen_pairs)
 
-        fidelities = {el: self.get_states_and_fidelty_for_real(el)[2] for el in self.g_values}
+        states_and_fidelity = [(el, self.get_states_and_fidelty_for_real(el)) for el in self.g_values]
+        fidelities = {g: s[2] for g, s in states_and_fidelity}
+        abs_fidelities = {g: s[3] for g, s in states_and_fidelity}
 
-        snap = WeightSnapshot(gen_pairs, disc_pairs, prob_fake_real, prob_real_real, epoch, label, fidelities,
+        snap = WeightSnapshot(gen_pairs, disc_pairs, prob_fake_real, prob_real_real, epoch, label, fidelities, abs_fidelities,
                               self.compare_on_fidelity)
         self.__update_best_generator_weights(
             snap,
@@ -313,6 +320,7 @@ class WeightSnapshot(object):
                  epoch: int,
                  label: TrainingPhaseLabel,
                  fidelities: Dict[str, float],
+                 abs_fidelities: Dict[str, float],
                  compare_on_fidelity: bool = True) -> None:
         self.gen_pairs = {el[0].name: el[1] for el in gen_pairs.items()}
         self.disc_pairs = {el[0].name: el[1] for el in disc_pairs.items()}
@@ -321,6 +329,7 @@ class WeightSnapshot(object):
         self.epoch = epoch
         self.label = label
         self.fidelities = fidelities
+        self.abs_fidelities = abs_fidelities
         self.compare_on_fidelity = compare_on_fidelity
 
     def is_better_than(self, other: 'WeightSnapshot') -> bool:
@@ -331,7 +340,7 @@ class WeightSnapshot(object):
         return (((self.prob_fake_real - 0.5) ** 2) + ((self.prob_real_real - 0.5) ** 2)) ** 0.5
 
     def get_fidelity_l2_norm(self):
-        return np.linalg.norm(list(self.fidelities.values()))
+        return np.linalg.norm(list(self.abs_fidelities.values()))
 
     def get_serializable_dict(self):
         return self.__dict__
