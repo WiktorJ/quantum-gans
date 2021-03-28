@@ -81,7 +81,7 @@ class Trainer:
 
                 for k, v in fidelities.items():
                     print(f"Fidelity for g={k} : {v[0]}")
-                    print(f"Fidelity modulo for g={k} : {v[0]}")
+                    print(f"Fidelity modulo for g={k} : {v[1]}")
 
             for step in range(gen_iteration):
                 opt.minimize(lambda: self.gen_cost(w, h), self.gen_weights)

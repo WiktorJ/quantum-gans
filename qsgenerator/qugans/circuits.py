@@ -22,9 +22,9 @@ def build_gan_circuits(generator_layers: int, discriminator_layers: int, data_bu
         data_qubits = qubits[disc_exclusive_qubits:-(generator_bath_size + 1)]
         label_gen_qubit = qubits[-1]
     else:
-        data_qubits = qubits[disc_exclusive_qubits:-generator_bath_size]
+        data_qubits = qubits[disc_exclusive_qubits:-generator_bath_size] if generator_bath_size > 0 \
+            else qubits[disc_exclusive_qubits:]
         label_gen_qubit = None
-
     if use_disc_label_qubit:
         label_disc_qubit = qubits[1]
     else:
