@@ -157,7 +157,8 @@ class Trainer:
                 snapshot_interval_epochs,
                 TrainingPhaseLabel.DISCRIMINATOR,
             )
-            plotter.on_epoch_end(disc_cost_val, gen_cost_val, prob_fake_real, prob_real_real, fidelities)
+            plotter.on_epoch_end(disc_cost_val, gen_cost_val, prob_fake_real, prob_real_real, fidelities,
+                                 epoch % snapshot_interval_epochs == 0)
             if epoch % snapshot_interval_epochs == 0:
                 print("----------------------------------------------------")
                 print("----------- AFTER DISCRIMINATOR TRAINING -----------")
@@ -195,7 +196,8 @@ class Trainer:
                 TrainingPhaseLabel.GENERATOR
             )
 
-            plotter.on_epoch_end(disc_cost_val, gen_cost_val, prob_fake_real, prob_real_real, fidelities)
+            plotter.on_epoch_end(disc_cost_val, gen_cost_val, prob_fake_real, prob_real_real, fidelities,
+                                 epoch % snapshot_interval_epochs == 0)
             if epoch % snapshot_interval_epochs == 0:
                 print("----------- AFTER GENERATOR TRAINING -----------")
                 print("Epoch {}: generator cost = {}".format(epoch, gen_cost_val))

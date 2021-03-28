@@ -9,7 +9,7 @@ import sympy
 class CircuitEvaluator:
 
     def __init__(self, circuit: cirq.Circuit,
-                 label_symbols: Tuple[sympy.Symbol],
+                 label_symbols: Tuple[sympy.Symbol] = None,
                  label_value_provider: Callable = None,
                  symbol_value_pairs: Union[Dict[sympy.Symbol, float], Dict[str, float]] = None,
                  symbols: Tuple[sympy.Symbol] = None) -> None:
