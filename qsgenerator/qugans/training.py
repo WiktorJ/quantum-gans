@@ -2,7 +2,7 @@ import json
 import statistics
 import neptune
 from enum import Enum
-from typing import Callable, Tuple, Iterable, Dict, List
+from typing import Callable, Tuple, Iterable, Dict
 
 import cirq
 import sympy
@@ -150,7 +150,7 @@ class Trainer:
                 opt.minimize(disc_cost, disc_weights)
             disc_cost_val = disc_cost().numpy()[0][0]
 
-            prob_fake_real, prob_real_real, fidelities = self.__get_probs_and_update_snapshots(
+            prob_fake_real, prob_real_real, fidelities, abs_fidelities = self.__get_probs_and_update_snapshots(
                 gen_weights,
                 disc_weights,
                 epoch,
@@ -158,7 +158,7 @@ class Trainer:
                 TrainingPhaseLabel.DISCRIMINATOR,
             )
             plotter.on_epoch_end(disc_cost_val, gen_cost_val, prob_fake_real, prob_real_real, fidelities,
-                                 epoch % snapshot_interval_epochs == 0)
+                                 abs_fidelities, epoch % snapshot_interval_epochs == 0)
             if epoch % snapshot_interval_epochs == 0:
                 print("----------------------------------------------------")
                 print("----------- AFTER DISCRIMINATOR TRAINING -----------")
@@ -188,7 +188,7 @@ class Trainer:
                 opt.minimize(gen_cost, gen_weights)
             gen_cost_val = gen_cost().numpy()[0][0]
 
-            prob_fake_real, prob_real_real, fidelities = self.__get_probs_and_update_snapshots(
+            prob_fake_real, prob_real_real, fidelities, abs_fidelities = self.__get_probs_and_update_snapshots(
                 gen_weights,
                 disc_weights,
                 epoch,
@@ -197,7 +197,7 @@ class Trainer:
             )
 
             plotter.on_epoch_end(disc_cost_val, gen_cost_val, prob_fake_real, prob_real_real, fidelities,
-                                 epoch % snapshot_interval_epochs == 0)
+                                 abs_fidelities, epoch % snapshot_interval_epochs == 0)
             if epoch % snapshot_interval_epochs == 0:
                 print("----------- AFTER GENERATOR TRAINING -----------")
                 print("Epoch {}: generator cost = {}".format(epoch, gen_cost_val))
@@ -273,11 +273,14 @@ class Trainer:
     def __update_evaluators(self, gen_pairs):
         self.gen_evaluator.symbol_value_pairs = gen_pairs
 
-    def __upload_to_neptune(self, prob_fake_real: float, prob_real_real: float, fidelities: Dict[str, float]):
+    def __upload_to_neptune(self, prob_fake_real: float, prob_real_real: float, fidelities: Dict[str, float],
+                            abs_fidelities: Dict[str, float]):
         neptune.log_metric("prob_fake_real", prob_fake_real)
         neptune.log_metric("prob_real_real", prob_real_real)
         for item in fidelities.items():
             neptune.log_metric(f"fidelity_g={item[0]}", item[1])
+        for item in abs_fidelities.items():
+            neptune.log_metric(f"abs_fidelity_g={item[0]}", item[1])
 
     def __get_probs_and_update_snapshots(self, gen_weights: np.array, disc_weights: np.array, epoch: int,
                                          snapshot_interval_epochs: int, label: 'TrainingPhaseLabel'):
@@ -294,15 +297,15 @@ class Trainer:
         fidelities = {g: s[2] for g, s in states_and_fidelity}
         abs_fidelities = {g: s[3] for g, s in states_and_fidelity}
 
-        snap = WeightSnapshot(gen_pairs, disc_pairs, prob_fake_real, prob_real_real, epoch, label, fidelities, abs_fidelities,
-                              self.compare_on_fidelity)
+        snap = WeightSnapshot(gen_pairs, disc_pairs, prob_fake_real, prob_real_real, epoch, label, fidelities,
+                              abs_fidelities, self.compare_on_fidelity)
         self.__update_best_generator_weights(
             snap,
             epoch % snapshot_interval_epochs != 0)
         if self.use_neptune:
-            self.__upload_to_neptune(prob_fake_real, prob_real_real, fidelities)
+            self.__upload_to_neptune(prob_fake_real, prob_real_real, fidelities, abs_fidelities)
 
-        return prob_fake_real, prob_real_real, fidelities
+        return prob_fake_real, prob_real_real, fidelities, abs_fidelities
 
 
 class TrainingPhaseLabel(Enum):
