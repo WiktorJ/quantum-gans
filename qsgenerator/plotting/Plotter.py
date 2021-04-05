@@ -72,6 +72,7 @@ class Plotter:
         self.trace_distance_history.append(trace_distace)
         self.abs_trace_distance_history.append(abs_trace_distance)
         self.i += 1
+        ret_figures = {}
         if refresh:
             distinct_real_labels = len(self.fidelities_history)
             distinct_gen_labels = len(self.gen_fidelities_history)
@@ -97,6 +98,7 @@ class Plotter:
                         a.set_ylim([0, 1])
 
                 self._plot_fidelity(self.gen_fidelities_history, axes_g)
+                ret_figures['gen_fidelities'] = fig_g
             if distinct_real_labels == 1:
                 axes_f = [axes_f]
 
@@ -135,6 +137,10 @@ class Plotter:
             plt.rc('xtick', labelsize=12)
             plt.rc('ytick', labelsize=12)
             plt.show()
+            ret_figures['distances'] = fig_m
+            ret_figures['grids'] = fig_p
+            ret_figures['fidelities'] = fig_m
+        return ret_figures
 
     def _get_average_from_last_n(self, array, field_supplier, n=10):
         n = min(n, len(array))

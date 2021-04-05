@@ -1,3 +1,4 @@
+import io
 import json
 from typing import Iterable, Callable, Tuple, List, Dict
 
@@ -7,6 +8,7 @@ import numpy as np
 import sympy
 import tensorflow as tf
 import tensorflow_quantum as tfq
+from PIL.Image import Image
 from scipy.optimize import linprog
 from qsgenerator.evaluators.circuit_evaluator import CircuitEvaluator
 from qsgenerator.plotting.Plotter import Plotter
@@ -76,7 +78,7 @@ class Trainer:
               plot=True):
 
         plotter = Plotter()
-
+        final_figures = {}
         for epoch in range(epochs):
             w, h, c = self.find_max_w_h_pairs()
             # TODO: Normalize w per qubit
@@ -85,8 +87,9 @@ class Trainer:
             trace_distance = self._get_trace_distance(False)
             abs_trace_distance = self._get_trace_distance(True)
             if plot:
-                plotter.plot_quwgans(em_distance, trace_distance, abs_trace_distance, fidelities, gen_fidelities,
-                                     epoch % snapshot_interval_epochs == 0)
+                final_figures = plotter.plot_quwgans(em_distance, trace_distance, abs_trace_distance, fidelities,
+                                                     gen_fidelities,
+                                                     epoch % snapshot_interval_epochs == 0)
 
             if epoch % snapshot_interval_epochs == 0:
                 print("----------------------------------------------------")
@@ -103,6 +106,8 @@ class Trainer:
 
             self._update_snapshot(em_distance, fidelities, gen_fidelities, trace_distance, abs_trace_distance,
                                   {k: v for k, v in zip(w, h)}, epoch, snapshot_interval_epochs)
+
+        self._upload_images_to_neptune(final_figures)
 
         def __json_default(obj):
             if isinstance(obj, np.ndarray):
@@ -209,7 +214,7 @@ class Trainer:
             snap,
             epoch % snapshot_interval_epochs != 0)
         if self.use_neptune:
-            self._upload_to_neptune(em_distance, fidelities, gen_fidelities, trace_dist, abs_trace_dist)
+            self._upload_metrics_to_neptune(em_distance, fidelities, gen_fidelities, trace_dist, abs_trace_dist)
 
     def __update_best_generator_weights(self, weight_snapshot: 'WeightSnapshot', replace: bool = True):
         if not replace \
@@ -219,8 +224,9 @@ class Trainer:
                 self.last_run_generator_weights.pop()
             self.last_run_generator_weights.append(weight_snapshot)
 
-    def _upload_to_neptune(self, em_distance: float, fidelities: List[FidelityGrid],
-                           gen_fidelities: List[GeneratorsFidelityGrid], trace_dist: float, abs_trace_dist: float):
+    def _upload_metrics_to_neptune(self, em_distance: float, fidelities: List[FidelityGrid],
+                                   gen_fidelities: List[GeneratorsFidelityGrid], trace_dist: float,
+                                   abs_trace_dist: float):
         neptune.log_metric("em_distance", em_distance)
         neptune.log_metric("trace_distance", trace_dist)
         neptune.log_metric("abs_trace_distance", abs_trace_dist)
@@ -231,6 +237,16 @@ class Trainer:
         for f in gen_fidelities:
             neptune.log_metric(f"fidelity ({f.label_gen1}:{f.label_gen2})", f.fidelity)
             neptune.log_metric(f"fidelity modulo ({f.label_gen1}:{f.label_gen2})", f.abs_fidelity)
+
+    def _upload_images_to_neptune(self, images_dict: Dict):
+        def fig2img(fig):
+            buf = io.BytesIO()
+            fig.savefig(buf)
+            buf.seek(0)
+            return buf
+
+        for k, v in images_dict.items():
+            neptune.log_artifact(fig2img(v), f"{k}.png")
 
 
 class WeightSnapshot(object):
