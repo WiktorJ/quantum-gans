@@ -12,7 +12,7 @@ import numpy as np
 
 from qsgenerator.evaluators.circuit_evaluator import CircuitEvaluator
 from qsgenerator.plotting.Plotter import Plotter
-from qsgenerator.utils import map_to_radians
+from qsgenerator.utils import map_to_radians, get_fidelity_grid
 
 
 class Trainer:
@@ -65,7 +65,8 @@ class Trainer:
                 tfq.layers.SampledExpectation(differentiator=gradient_method_provider()))
             self.gen_expectation = self._get_sampled_expectation(
                 tfq.layers.SampledExpectation(differentiator=gradient_method_provider()))
-        self.gen_evaluator = CircuitEvaluator(pure_gen, ls, label_value_provider)
+        self.gen_evaluator = CircuitEvaluator(pure_gen)
+        self.disc_evaluator = CircuitEvaluator(disc)
         self.real_evaluator = CircuitEvaluator(pure_real, real_symbols, real_values_provider)
 
     def real_disc_circuit_eval(self, disc_weights, g=None):
@@ -251,16 +252,10 @@ class Trainer:
         }
 
     def get_states_and_fidelty_for_real(self, g):
-        state = self.gen_evaluator.get_state_from_params(trace_dims=list(range(self.size)))
-        if isinstance(state, tuple):
-            generated, max_trace_prob = state
-        else:
-            generated = state
-            max_trace_prob = None
-        if self.use_neptune and max_trace_prob:
-            neptune.log_metric("max_trace_prob", max_trace_prob)
-        real = self.real_evaluator.get_state_from_params(g)
-        return generated, real, cirq.fidelity(generated, real), cirq.fidelity(abs(generated), abs(real))
+        state, abs_state = self.gen_evaluator.get_state_from_params(trace_dims=list(range(self.size)))
+        generated = state
+        real, abs_real = self.real_evaluator.get_state_from_params(g)
+        return generated, real, get_fidelity_grid(generated, real)
 
     def __update_best_generator_weights(self, weight_snapshot: 'WeightSnapshot', replace: bool = True):
         if not replace \
@@ -270,8 +265,9 @@ class Trainer:
                 self.last_run_generator_weights.pop()
             self.last_run_generator_weights.append(weight_snapshot)
 
-    def __update_evaluators(self, gen_pairs):
-        self.gen_evaluator.symbol_value_pairs = gen_pairs
+    def __update_evaluators(self, gen_pairs, disc_pairs):
+        self.gen_evaluator.set_symbol_value_pairs(gen_pairs)
+        self.disc_evaluator.set_symbol_value_pairs(disc_pairs)
 
     def __upload_to_neptune(self, prob_fake_real: float, prob_real_real: float, fidelities: Dict[str, float],
                             abs_fidelities: Dict[str, float]):
@@ -291,13 +287,14 @@ class Trainer:
         gen_pairs = {el[0]: el[1] for el in zip(self.gs, gen_weights[:].numpy())}
         disc_pairs = {el[0]: el[1] for el in zip(self.ds, disc_weights[:].numpy())}
 
-        self.__update_evaluators(gen_pairs)
+        self.__update_evaluators(gen_pairs, disc_pairs)
 
         states_and_fidelity = [(el, self.get_states_and_fidelty_for_real(el)) for el in self.g_values]
         fidelities = {g: s[2] for g, s in states_and_fidelity}
         abs_fidelities = {g: s[3] for g, s in states_and_fidelity}
 
-        snap = WeightSnapshot(gen_pairs, disc_pairs, prob_fake_real, prob_real_real, epoch, label, fidelities,
+        snap = WeightSnapshot(gen_pairs[0][1], disc_pairs[0][1], prob_fake_real, prob_real_real, epoch, label,
+                              fidelities,
                               abs_fidelities, self.compare_on_fidelity)
         self.__update_best_generator_weights(
             snap,

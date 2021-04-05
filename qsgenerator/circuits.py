@@ -19,7 +19,6 @@ def build_circuit(layers: int, data_qubits, data_qubits_prefix, label_qubit=None
 
     return circuit, symbols
 
-
 def _build_layer(label_qubit, data_qubits, label_symbol, data_symbols, full_layer_labeling=True):
     assert len(data_symbols) == len(data_qubits) * 3 - 1
 
