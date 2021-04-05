@@ -1,7 +1,6 @@
 tensorflow==2.3.1
 matplotlib==3.3.2
 tensorflow-quantum
-qutip==4.5.3
 sympy==1.5
 cirq==0.9.1
 numpy==1.18.5
