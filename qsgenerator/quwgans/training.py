@@ -83,7 +83,7 @@ class Trainer:
             w, h, c = self.find_max_w_h_pairs()
             # TODO: Normalize w per qubit
             em_distance = sum(x * y for x, y in zip(w, c))
-            fidelities, gen_fidelities = self.get_fidelty_for_real()
+            fidelities, gen_fidelities, generated, real = self.get_fidelty_for_real()
             trace_distance = self._get_trace_distance(False)
             abs_trace_distance = self._get_trace_distance(True)
             if plot:
@@ -105,9 +105,7 @@ class Trainer:
                     p.assign(p / s)
 
             self._update_snapshot(em_distance, fidelities, gen_fidelities, trace_distance, abs_trace_distance,
-                                  {k: v for k, v in zip(w, h)}, epoch, snapshot_interval_epochs)
-
-        self._upload_images_to_neptune(final_figures)
+                                  {k: v for k, v in zip(w, h)}, generated, real, epoch, snapshot_interval_epochs)
 
         def __json_default(obj):
             if isinstance(obj, np.ndarray):
@@ -129,16 +127,24 @@ class Trainer:
         print("-------------------------------------")
         print("----------- TRAINING DONE -----------")
         json_result = json.dumps(self.last_run_generator_weights, default=__json_default, indent=2)
+        if self.use_neptune:
+            self._upload_images_to_neptune(final_figures)
+            neptune.log_artifact(io.StringIO(self.gen_evaluator.get_resolved_circuit().to_qasm()), 'gen_qasm.txt')
+            neptune.log_artifact(io.StringIO(json_result), 'full_snapshot.json')
         return json_result
 
-    def get_fidelty_for_real(self) -> Tuple[List[FidelityGrid], List[GeneratorsFidelityGrid]]:
+    def get_fidelty_for_real(self) -> Tuple[
+        List[FidelityGrid],
+        List[GeneratorsFidelityGrid],
+        List[Tuple[float, any, np.array, np.array]],
+        List[Tuple[float, any, np.array, np.array]]]:
         gen_pairs = [
             (weights[0].numpy(), weights[1], {el[0]: float(el[1]) for el in zip(self.gs, weights[2][:].numpy())})
             for weights in self.gen_weights]
         self.gen_evaluator.set_symbol_value_pairs(gen_pairs)
         generated = self.gen_evaluator.get_all_states_from_params()
         real = self.real_evaluator.get_all_states_from_params()
-        return get_fidelity_grid(generated, real), get_generator_fidelity_grid(generated)
+        return get_fidelity_grid(generated, real), get_generator_fidelity_grid(generated), generated, real
 
     def find_max_w_h_pairs(self):
         c = (self.get_all_generator_expectations(self.disc_hamiltonians).numpy() - self.get_real_expectation(
@@ -202,14 +208,15 @@ class Trainer:
 
     def _update_snapshot(self, em_distance: float, fidelities: List[FidelityGrid],
                          gen_fidelities: List[GeneratorsFidelityGrid], trace_dist: float, abs_trace_dist: float,
-                         disc_h_w: Dict[float, cirq.PauliString], epoch: int, snapshot_interval_epochs: int):
+                         disc_h_w: Dict[float, cirq.PauliString],
+                         generated: List[Tuple[float, any, np.array, np.array]],
+                         real: List[Tuple[float, any, np.array, np.array]], epoch: int, snapshot_interval_epochs: int):
         gen_pairs = [
             (weights[0].numpy(), weights[1], {el[0].name: float(el[1]) for el in zip(self.gs, weights[2][:].numpy())})
             for weights in self.gen_weights]
 
         snap = WeightSnapshot(gen_pairs, em_distance, trace_dist, abs_trace_dist, epoch, fidelities, gen_fidelities,
-                              disc_h_w,
-                              self.compare_on_fidelity)
+                              disc_h_w, generated, real, self.compare_on_fidelity)
         self.__update_best_generator_weights(
             snap,
             epoch % snapshot_interval_epochs != 0)
@@ -260,15 +267,19 @@ class WeightSnapshot(object):
                  fidelities: List[FidelityGrid],
                  abs_fidelities: List[GeneratorsFidelityGrid],
                  disc_w_h: Dict[float, cirq.PauliString],
+                 generated: List[Tuple[float, any, np.array, np.array]],
+                 real: List[Tuple[float, any, np.array, np.array]],
                  compare_on_trace: bool = True) -> None:
         self.abs_trace_distance = abs_trace_distance
         self.trace_distance = trace_distance
-        self.gen_pairs = gen_pairs
         self.em_distance = em_distance
-        self.epoch = epoch
         self.fidelities = fidelities
         self.abs_fidelities = abs_fidelities
+        self.gen_pairs = gen_pairs
         self.disc_w_h = disc_w_h
+        self.real = real
+        self.generated = generated
+        self.epoch = epoch
         self.compare_on_fidelity = compare_on_trace
 
     def is_better_than(self, other: 'WeightSnapshot') -> bool:
