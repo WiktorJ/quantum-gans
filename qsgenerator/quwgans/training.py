@@ -1,6 +1,6 @@
 import io
 import json
-from typing import Iterable, Callable, Tuple, List, Dict
+from typing import Callable, Tuple, List, Dict
 
 import cirq
 import neptune
@@ -8,7 +8,6 @@ import numpy as np
 import sympy
 import tensorflow as tf
 import tensorflow_quantum as tfq
-from PIL.Image import Image
 from scipy.optimize import linprog
 from qsgenerator.evaluators.circuit_evaluator import CircuitEvaluator
 from qsgenerator.plotting.Plotter import Plotter

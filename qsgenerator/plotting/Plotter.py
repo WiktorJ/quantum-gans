@@ -139,7 +139,7 @@ class Plotter:
             plt.show()
             ret_figures['distances'] = fig_m
             ret_figures['grids'] = fig_p
-            ret_figures['fidelities'] = fig_m
+            ret_figures['fidelities'] = fig_f
         return ret_figures
 
     def _get_average_from_last_n(self, array, field_supplier, n=10):
