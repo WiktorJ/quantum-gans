@@ -36,3 +36,15 @@ def get_arcsin_x_rotation_provider(bases: List[float], circuit_width: int):
         rotations[b] = rotation
 
     return provider
+
+
+def get_fixed_random_rotation_provider(size, low=0, high=np.pi):
+    def provider(g: float):
+        return rotations.setdefault(g, get_random_rotation(size, low, high))
+
+    rotations = {}
+    return provider
+
+
+def get_random_rotation(size, low=0, high=np.pi):
+    return np.random.uniform(low=low, high=high, size=(size,))

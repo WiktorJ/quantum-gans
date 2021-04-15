@@ -28,6 +28,8 @@ class Trainer:
                  gs: Tuple[sympy.Symbol],
                  g_values: List[float],
                  real_values_provider: Callable,
+                 ls: Tuple[sympy.Symbol] = None,
+                 label_value_provider: Callable = None,
                  rank: int = 1,
                  use_analytical_expectation: bool = True,
                  gradient_method_provider: Callable = None,
@@ -55,6 +57,8 @@ class Trainer:
         self.sampling_repetitions = sampling_repetitions
         self.g_provider = lambda: np.random.choice(self.g_values)
         self.real_values_provider = real_values_provider
+        self.label_value_provider = label_value_provider
+        self.ls = ls
         self.gen_evaluator = CircuitEvaluator(self.gen)
         self.real_evaluator = CircuitEvaluator(self.real, real_symbols, real_values_provider, g_values=g_values)
         self.compare_on_fidelity = compare_on_fidelity
@@ -100,7 +104,7 @@ class Trainer:
                 opt.minimize(lambda: self.gen_cost(w, h), self.var_list)
                 # probabilities normalization
                 s = sum(el[0] for el in self.gen_weights)
-                for p, l, _ in self.gen_weights:
+                for p, _, _ in self.gen_weights:
                     p.assign(p / s)
 
             self._update_snapshot(em_distance, fidelities, gen_fidelities, trace_distance, abs_trace_distance,
@@ -176,21 +180,31 @@ class Trainer:
 
         return expectation
 
-    def get_real_expectation(self, operators: List[cirq.PauliString]):
-        expectation = None
-        for g in self.g_values:
+    def get_real_expectation(self, operators: List[cirq.PauliString], average_all: bool = True):
+        if not average_all:
+            g = self.g_provider()
             full_weights = tf.keras.layers.Layer()(
                 tf.Variable(np.array(self.real_values_provider(g), dtype=np.float32)))
             full_weights = tf.reshape(full_weights, (1, full_weights.shape[0]))
-            partial_expectation = (1 / (len(self.g_values))) * self.real_expectation([self.real],
-                                                                                     symbol_names=self.real_symbols,
-                                                                                     symbol_values=full_weights,
-                                                                                     operators=operators)
-            if expectation is None:
-                expectation = partial_expectation
-            else:
-                expectation += partial_expectation
-        return expectation
+            return self.real_expectation([self.real],
+                                         symbol_names=self.real_symbols,
+                                         symbol_values=full_weights,
+                                         operators=operators)
+        else:
+            expectation = None
+            for g in self.g_values:
+                full_weights = tf.keras.layers.Layer()(
+                    tf.Variable(np.array(self.real_values_provider(g), dtype=np.float32)))
+                full_weights = tf.reshape(full_weights, (1, full_weights.shape[0]))
+                partial_expectation = (1 / (len(self.g_values))) * self.real_expectation([self.real],
+                                                                                         symbol_names=self.real_symbols,
+                                                                                         symbol_values=full_weights,
+                                                                                         operators=operators)
+                if expectation is None:
+                    expectation = partial_expectation
+                else:
+                    expectation += partial_expectation
+            return expectation
 
     def _get_trace_distance(self, modulo: bool = True):
         eigen_values, _ = np.linalg.eig(

@@ -47,3 +47,4 @@ def get_generator_fidelity_grid(generated):
                                    cirq.fidelity(generated[i][2], generated[j][2]),
                                    cirq.fidelity(generated[i][3], generated[j][3]))
             for i in range(len(generated)) for j in range(len(generated)) if i != j]
+

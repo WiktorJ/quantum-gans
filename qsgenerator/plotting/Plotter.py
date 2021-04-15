@@ -17,6 +17,8 @@ class Plotter:
         self.em_distance_history = []
         self.trace_distance_history = []
         self.abs_trace_distance_history = []
+        self.fidelities_history_simple = defaultdict(list)
+        self.abs_fidelities_history_simple = defaultdict(list)
         self.fidelities_history = defaultdict(lambda: defaultdict(list))
         self.abs_fidelities_history = defaultdict(lambda: defaultdict(list))
         self.gen_fidelities_history = defaultdict(lambda: defaultdict(list))
@@ -33,9 +35,9 @@ class Plotter:
         self.prob_fake_real_history.append(prob_fake_real)
         self.prob_real_real_history.append(prob_real_real)
         for item in fidelities.items():
-            self.fidelities_history[item[0]].append(item[1])
+            self.abs_fidelities_history_simple[item[0]].append(item[1])
         for item in abs_fidelities.items():
-            self.abs_fidelities_history[item[0]].append(item[1])
+            self.fidelities_history_simple[item[0]].append(item[1])
         self.i += 1
         if refresh:
             clear_output(wait=True)
@@ -52,10 +54,10 @@ class Plotter:
             axes[1].plot(self.x, self.prob_real_real_history, label="prob real real")
             axes[1].plot(self.x, self.prob_fake_real_history, label="prob fake real")
             axes[1].legend()
-            for item in self.fidelities_history.items():
+            for item in self.abs_fidelities_history_simple.items():
                 axes[2].plot(self.x, item[1], label=f"fidelity g={item[0]}")
             axes[2].legend()
-            for item in self.abs_fidelities_history.items():
+            for item in self.fidelities_history_simple.items():
                 axes[3].plot(self.x, item[1], label=f"abs_fidelity g={item[0]}")
             axes[3].legend()
             fig.tight_layout()

@@ -92,3 +92,5 @@ class CircuitEvaluator:
             self.symbol_value_pairs = [(1, 1, pairs)]
         else:
             self.symbol_value_pairs = pairs
+
+cirq.Circuit().all_operations()

@@ -2,7 +2,7 @@ import json
 import statistics
 import neptune
 from enum import Enum
-from typing import Callable, Tuple, Iterable, Dict
+from typing import Callable, Tuple, Dict, List
 
 import cirq
 import sympy
@@ -18,7 +18,7 @@ from qsgenerator.utils import map_to_radians, get_fidelity_grid
 class Trainer:
 
     def __init__(self,
-                 g_values: Iterable,
+                 g_values: List,
                  size: int,
                  disc: cirq.Circuit,
                  gen: cirq.Circuit,
@@ -67,7 +67,7 @@ class Trainer:
                 tfq.layers.SampledExpectation(differentiator=gradient_method_provider()))
         self.gen_evaluator = CircuitEvaluator(pure_gen)
         self.disc_evaluator = CircuitEvaluator(disc)
-        self.real_evaluator = CircuitEvaluator(pure_real, real_symbols, real_values_provider)
+        self.real_evaluator = CircuitEvaluator(pure_real, real_symbols, real_values_provider, g_values=g_values)
 
     def real_disc_circuit_eval(self, disc_weights, g=None):
         # cirq.Simulator().simulate(real)
@@ -252,9 +252,8 @@ class Trainer:
         }
 
     def get_states_and_fidelty_for_real(self, g):
-        state, abs_state = self.gen_evaluator.get_state_from_params(trace_dims=list(range(self.size)))
-        generated = state
-        real, abs_real = self.real_evaluator.get_state_from_params(g)
+        generated = self.gen_evaluator.get_all_states_from_params()
+        real = self.real_evaluator.get_all_states_from_params()
         return generated, real, get_fidelity_grid(generated, real)
 
     def __update_best_generator_weights(self, weight_snapshot: 'WeightSnapshot', replace: bool = True):
@@ -284,16 +283,16 @@ class Trainer:
             [self.prob_fake_true(gen_weights, disc_weights, g).numpy()[0][0] for g in self.g_values])
         prob_real_real = statistics.mean([self.prob_real_true(disc_weights, g).numpy()[0][0] for g in self.g_values])
 
-        gen_pairs = {el[0]: el[1] for el in zip(self.gs, gen_weights[:].numpy())}
-        disc_pairs = {el[0]: el[1] for el in zip(self.ds, disc_weights[:].numpy())}
+        gen_pairs = [(1, 0, {el[0]: float(el[1]) for el in zip(self.gs, gen_weights[:].numpy())})]
+        disc_pairs = [(1, self.g_values[0], {el[0]: float(el[1]) for el in zip(self.ds, disc_weights[:].numpy())})]
 
         self.__update_evaluators(gen_pairs, disc_pairs)
 
-        states_and_fidelity = [(el, self.get_states_and_fidelty_for_real(el)) for el in self.g_values]
-        fidelities = {g: s[2] for g, s in states_and_fidelity}
-        abs_fidelities = {g: s[3] for g, s in states_and_fidelity}
+        states_and_fidelity = [self.get_states_and_fidelty_for_real(el) for el in self.g_values]
+        fidelities = {fg.label_real: fg.fidelity for fg in states_and_fidelity[0][2]}
+        abs_fidelities = {fg.label_real: fg.abs_fidelity for fg in states_and_fidelity[0][2]}
 
-        snap = WeightSnapshot(gen_pairs[0][1], disc_pairs[0][1], prob_fake_real, prob_real_real, epoch, label,
+        snap = WeightSnapshot(gen_pairs[0][2], disc_pairs[0][2], prob_fake_real, prob_real_real, epoch, label,
                               fidelities,
                               abs_fidelities, self.compare_on_fidelity)
         self.__update_best_generator_weights(
