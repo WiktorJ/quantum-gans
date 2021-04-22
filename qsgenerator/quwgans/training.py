@@ -8,10 +8,12 @@ import numpy as np
 import sympy
 import tensorflow as tf
 import tensorflow_quantum as tfq
+import functools
 from scipy.optimize import linprog
 from qsgenerator.evaluators.circuit_evaluator import CircuitEvaluator
 from qsgenerator.plotting.Plotter import Plotter
 from qsgenerator.quwgans.circuits import get_discriminator
+from qsgenerator.quwgans.real_expectations_provider import RealExpectationsProvider, PrecomputedExpectationsProvider
 from qsgenerator.utils import get_zero_ones_array, \
     get_fidelity_grid, \
     get_generator_fidelity_grid, \
@@ -28,6 +30,7 @@ class Trainer:
                  gs: Tuple[sympy.Symbol],
                  g_values: List[float],
                  real_values_provider: Callable,
+                 real_expectations_provider: RealExpectationsProvider,
                  ls: Tuple[sympy.Symbol] = None,
                  label_value_provider: Callable = None,
                  rank: int = 1,
@@ -42,7 +45,9 @@ class Trainer:
         self.real_symbols = real_symbols
         self.gs = gs
         self.gen = gen
-        self.disc_hamiltonians, self.qubit_to_string_index = get_discriminator(self.real)
+        self.real_expectations_provider = real_expectations_provider
+
+        self.disc_hamiltonians, self.qubit_to_string_index = self.real_expectations_provider.get_pauli_strings_and_indexes()
         self.A = np.array([get_zero_ones_array(len(self.disc_hamiltonians), indices) for indices in
                            self.qubit_to_string_index.values()])
         self.b = np.ones(len(self.qubit_to_string_index))
@@ -151,7 +156,7 @@ class Trainer:
 
     def find_max_w_h_pairs(self):
         c = (self.get_all_generator_expectations(self.disc_hamiltonians).numpy() - self.get_real_expectation(
-            self.disc_hamiltonians).numpy()).flatten()
+            self.disc_hamiltonians)).flatten()
         res = linprog(-c, A_ub=self.A, b_ub=self.b, bounds=(0, 1))
 
         return [res.x[i] for i in range(len(self.disc_hamiltonians)) if res.x[i] > 1.e-5], \
@@ -183,28 +188,23 @@ class Trainer:
     def get_real_expectation(self, operators: List[cirq.PauliString], average_all: bool = True):
         if not average_all:
             g = self.g_provider()
-            full_weights = tf.keras.layers.Layer()(
-                tf.Variable(np.array(self.real_values_provider(g), dtype=np.float32)))
-            full_weights = tf.reshape(full_weights, (1, full_weights.shape[0]))
-            return self.real_expectation([self.real],
-                                         symbol_names=self.real_symbols,
-                                         symbol_values=full_weights,
-                                         operators=operators)
+            return self._filter_expectations_by_pauli_strings(
+                operators,
+                self.real_expectations_provider.get_expectations_for_parameters([g])[g])
         else:
-            expectation = None
-            for g in self.g_values:
-                full_weights = tf.keras.layers.Layer()(
-                    tf.Variable(np.array(self.real_values_provider(g), dtype=np.float32)))
-                full_weights = tf.reshape(full_weights, (1, full_weights.shape[0]))
-                partial_expectation = (1 / (len(self.g_values))) * self.real_expectation([self.real],
-                                                                                         symbol_names=self.real_symbols,
-                                                                                         symbol_values=full_weights,
-                                                                                         operators=operators)
-                if expectation is None:
-                    expectation = partial_expectation
-                else:
-                    expectation += partial_expectation
-            return expectation
+            parameter_to_expectation_dict = \
+                self.real_expectations_provider.get_expectations_for_parameters(self.g_values)
+            return functools.reduce(lambda acc, x: acc + (1 / (len(self.g_values))) * x,
+                                    [self._filter_expectations_by_pauli_strings(operators, pauli_string_to_expectation)
+                                     for
+                                     param, pauli_string_to_expectation in parameter_to_expectation_dict.items()],
+                                    np.zeros(len(operators)))
+
+    @staticmethod
+    def _filter_expectations_by_pauli_strings(pauli_strings: List[cirq.PauliString],
+                                              pauli_string_to_expectation: Dict[cirq.PauliString, float]
+                                              ) -> np.array:
+        return np.array([pauli_string_to_expectation[s] for s in pauli_strings])
 
     def _get_trace_distance(self, modulo: bool = True):
         eigen_values, _ = np.linalg.eig(

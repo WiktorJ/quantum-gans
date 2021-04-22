@@ -11,7 +11,7 @@ def get_discriminator(circuit: cirq.Circuit):
 
 
 def __get_pauli_strings(qubits: List[cirq.Qid]) -> \
-        Tuple[List[cirq.PauliString], Dict[cirq.Qid, List[cirq.PauliString]]]:
+        Tuple[List[cirq.PauliString], Dict[cirq.Qid, List[int]]]:
     non_trivial_pauli_gates = {cirq.X, cirq.Y, cirq.Z}
     pauli_strings = []
     qubit_to_string_index = defaultdict(list)
