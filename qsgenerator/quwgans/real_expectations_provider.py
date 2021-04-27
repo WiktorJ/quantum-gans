@@ -267,7 +267,7 @@ class WassersteinGanExpectationProvider(RealExpectationsProvider):
         dims = [self.gen_input_dim] + self.hidden_dim
         for i in range(len(dims) - 1):
             model.add(layers.Dense(dims[i + 1], use_bias=True, input_shape=(dims[i],)))
-            # model.add(layers.BatchNormalization())
+            model.add(layers.BatchNormalization())
             model.add(layers.LeakyReLU())
         model.add(layers.Dense(self.input_dim, use_bias=True, input_shape=(dims[-1],)))
         model.add(layers.Activation(tf.nn.sigmoid))
