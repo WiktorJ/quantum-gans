@@ -5,7 +5,9 @@ from enum import Enum
 from typing import List, Any, Callable, Tuple, Dict
 
 import cirq
+import neptune
 import sympy
+import statistics as st
 import tensorflow as tf
 import tensorflow_quantum as tfq
 import numpy as np
@@ -190,7 +192,12 @@ class WassersteinGanExpectationProvider(RealExpectationsProvider):
                  hidden_dim: List[int],
                  penalty_factor: int = 10,
                  epochs: int = 50,
-                 batch_size: int = 4):
+                 batch_size: int = 4,
+                 n_crit: int = 5,
+                 report_interval_epochs: int = 200,
+                 use_neptune: bool = False):
+        self.use_neptune = use_neptune
+        self.n_crit = n_crit
         self.batch_size = batch_size
         self.epochs = epochs
         self.gen_input_dim = gen_input_dim
@@ -205,6 +212,7 @@ class WassersteinGanExpectationProvider(RealExpectationsProvider):
         self.generator = None
         self.expectations = {}
         self.initialized = False
+        self.report_interval_epochs = report_interval_epochs
 
     def get_expectations_for_parameters(self, parameters: List[Any], filter_small_expectations: bool = False) \
             -> Dict[Any, Dict[cirq.PauliString, float]]:
@@ -232,35 +240,54 @@ class WassersteinGanExpectationProvider(RealExpectationsProvider):
         dataset = tf.data.Dataset.from_tensor_slices((np.array(expectations) + 1) / 2)
         dataset = dataset.shuffle(buffer_size=len(self.precomputed_expectations_provider.real_state_parameters)) \
             .batch(self.batch_size)
+        start = time.time()
         for epoch in range(self.epochs):
-            start = time.time()
-
+            epoch_gen_losses = []
+            epoch_disc_losses = []
             for batch in dataset:
-                self.train_step(batch)
+                gen_loss, disc_loss = self.train_step(batch)
 
-            print('Time for epoch {} is {} sec'.format(epoch + 1, time.time() - start))
+                epoch_gen_losses.append(gen_loss)
+                epoch_disc_losses.append(disc_loss)
+            average_epoch_gen_loss = st.mean(epoch_gen_losses)
+            average_epoch_disc_loss = st.mean(epoch_disc_losses)
+            if self.use_neptune:
+                neptune.log_metric("wgan_gen_loss", average_epoch_gen_loss)
+                neptune.log_metric("wgan_disc_loss", average_epoch_disc_loss)
+            if epoch % self.report_interval_epochs == 0:
+                print(f"Epoch: {epoch}, time for last {self.report_interval_epochs} epochs {time.time() - start}")
+                print(f"Last epoch gen loss: {average_epoch_gen_loss}, disc loss: {average_epoch_disc_loss}")
+                start = time.time()
         self.initialized = True
 
     def get_pauli_strings_and_indexes(self) -> Tuple[List[cirq.PauliString], Dict[cirq.Qid, List[int]]]:
         return self.precomputed_expectations_provider.pauli_strings_and_indexes
 
     def train_step(self, batch):
+        avg_disc_loss = 0
+        for _ in range(self.n_crit):
+            noise = tf.random.normal([batch.shape[0], self.gen_input_dim])
+
+            with tf.GradientTape() as disc_tape:
+                generated_expectations = self.generator(noise, training=True)
+                real_output = self.discriminator(batch, training=True)
+                fake_output = self.discriminator(generated_expectations, training=True)
+
+                disc_loss = self._discriminator_loss(real_output, fake_output, generated_expectations, batch)
+            avg_disc_loss += (1 / self.n_crit) * disc_loss.numpy()
+            gradients_of_discriminator = disc_tape.gradient(disc_loss, self.discriminator.trainable_variables)
+            self.discriminator_optimizer.apply_gradients(
+                zip(gradients_of_discriminator, self.discriminator.trainable_variables))
+
         noise = tf.random.normal([batch.shape[0], self.gen_input_dim])
-
-        with tf.GradientTape() as gen_tape, tf.GradientTape() as disc_tape:
+        with tf.GradientTape() as gen_tape:
             generated_expectations = self.generator(noise, training=True)
-            real_output = self.discriminator(batch, training=True)
             fake_output = self.discriminator(generated_expectations, training=True)
-
             gen_loss = self._generator_loss(fake_output)
-            disc_loss = self._discriminator_loss(real_output, fake_output, generated_expectations, batch)
-
         gradients_of_generator = gen_tape.gradient(gen_loss, self.generator.trainable_variables)
-        gradients_of_discriminator = disc_tape.gradient(disc_loss, self.discriminator.trainable_variables)
-
         self.generator_optimizer.apply_gradients(zip(gradients_of_generator, self.generator.trainable_variables))
-        self.discriminator_optimizer.apply_gradients(
-            zip(gradients_of_discriminator, self.discriminator.trainable_variables))
+
+        return gen_loss.numpy(), avg_disc_loss
 
     def _generator(self):
         model = tf.keras.Sequential()
