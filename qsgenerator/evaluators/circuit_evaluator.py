@@ -36,28 +36,36 @@ class CircuitEvaluator:
                 return state_vector, abs(state_vector)
         return state_vector, abs(state_vector)
 
-    def get_state_from_params(self, labels=None, pair=None, trace_dims: list = None, max_traced: bool = True):
+    def get_state_from_params(self,
+                              labels=None,
+                              pair=None,
+                              trace_dims: list = None,
+                              max_traced: bool = True,
+                              symbols_to_override: dict = None):
         if labels is None and pair is None:
             pair = self.symbol_value_pairs[0][2]
-        return self.get_state(self.get_resolver(labels, pair), trace_dims, max_traced)
+        return self.get_state(self.get_resolver(labels, pair, symbols_to_override), trace_dims, max_traced)
 
     def get_all_states_from_params(self, trace_dims: list = None, max_traced: bool = True):
         return [(p, l, *self.get_state_from_params(pair=pair, trace_dims=trace_dims, max_traced=max_traced))
                 for p, l, pair in self.symbol_value_pairs]
 
-    def get_resolved_circuit(self, labels=None, pair=None):
+    def get_resolved_circuit(self, labels=None, pair=None, symbols_to_override: dict = None):
         if labels is None and pair is None:
             pair = self.symbol_value_pairs[0][2]
-        return cirq.resolve_parameters(self.circuit, self.get_resolver(labels, pair))
+        return cirq.resolve_parameters(self.circuit, self.get_resolver(labels, pair,  symbols_to_override))
 
     def get_all_resolved_circuits(self):
         return [(p, l, self.get_resolved_circuit(pair=pair)) for p, l, pair in self.symbol_value_pairs]
 
-    def get_resolver(self, labels=None, pair=None):
+    def get_resolver(self, labels=None, pair=None, symbols_to_override: dict = None):
         if labels is not None and self.value_provider:
             params = {el[0]: el[1] for el in zip(self.symbols, self.value_provider(labels))}
         else:
             params = pair
+        if symbols_to_override is not None:
+            for symbol, value in symbols_to_override.items():
+                params[symbol] = value
         return cirq.ParamResolver(params)
 
     def get_circuit_size(self):

@@ -4,7 +4,8 @@ import sympy
 
 class ButterflyCircuitBuilder:
 
-    def __init__(self):
+    def __init__(self, symbol_name_prefix: str = "theta"):
+        self.symbol_name_prefix = symbol_name_prefix
         self.thetas = ()
 
     def build(self, size=None, qubits=None):
@@ -32,7 +33,7 @@ class ButterflyCircuitBuilder:
         return circuit, self.thetas
 
     def __build_simple_layer(self, qubits):
-        new_thetas = sympy.symbols(f"theta{len(self.thetas)}:{len(self.thetas) + len(qubits)}")
+        new_thetas = sympy.symbols(f"{self.symbol_name_prefix}{len(self.thetas)}:{len(self.thetas) + len(qubits)}")
         self.thetas += new_thetas
         circuit = cirq.Circuit()
         for i, q in enumerate(qubits):
@@ -45,7 +46,7 @@ class ButterflyCircuitBuilder:
         circuit = cirq.Circuit()
         while current_qubit_index + skip_factor < len(qubits):
             while current_qubit_index + skip_factor < len(qubits) and curent_skip > 0:
-                self.thetas += (sympy.symbols(f"theta{len(self.thetas)}"),)
+                self.thetas += (sympy.symbols(f"{self.symbol_name_prefix}{len(self.thetas)}"),)
                 circuit.append([cirq.CXPowGate(exponent=self.thetas[-1]).on(qubits[current_qubit_index],
                                                                             qubits[current_qubit_index + skip_factor])])
                 curent_skip -= 1

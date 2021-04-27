@@ -10,9 +10,10 @@ from typing import Union, Iterable
 
 class PhaseCircuitBuilder:
 
-    def __init__(self, all_gates_parametrized=False) -> None:
+    def __init__(self, all_gates_parametrized: bool = False, g_positive: bool = False) -> None:
         self.thetas = ()
         self.all_gates_parametrized = all_gates_parametrized
+        self.g_positive = g_positive
 
     def build_ground_state_circuit(self, size=None, qubits=None, full_circuit=True, full_parametrization=False,
                                    zxz=False):
@@ -86,8 +87,8 @@ class PhaseCircuitBuilder:
             *self._get_r_gate(q2, theta_r, y_supplier)
         )
 
-        # For g > 0
-        u1.append([cirq.H(q2), cirq.CNOT(q1, q2), cirq.H(q2)])
+        if self.g_positive:
+            u1.append([cirq.H(q2), cirq.CNOT(q1, q2), cirq.H(q2)])
         return u1
 
     def build_u_gate(self, q1, q2, theta_v, theta_vt, theta_w, theta_wt, ry_supplier):

@@ -20,7 +20,8 @@ from qsgenerator.quwgans.circuits import get_discriminator
 class RealExpectationsProvider(ABC):
 
     @abstractmethod
-    def get_expectations_for_parameters(self, parameters: List[Any]) -> Dict[Any, Dict[cirq.PauliString, float]]:
+    def get_expectations_for_parameters(self, parameters: List[Any], filter_small_expectations: bool = True) \
+            -> Dict[Any, Dict[cirq.PauliString, float]]:
         pass
 
     @abstractmethod
@@ -40,6 +41,7 @@ class PrecomputedExpectationsProvider(RealExpectationsProvider):
                  real_state_parameters: List[Any],
                  real_values_provider: Callable,
                  pauli_strings_and_indexes: Tuple[List[cirq.PauliString], Dict[cirq.Qid, List[int]]] = None,
+                 eps: float = 1.e-5,
                  sampling_repetitions: int = 1000,
                  use_analytical_expectation: bool = True,
                  gradient_method_provider: Callable = None,
@@ -47,6 +49,7 @@ class PrecomputedExpectationsProvider(RealExpectationsProvider):
         self.real = real
         self.real_symbols = real_symbols
         gradient_method_provider = gradient_method_provider if gradient_method_provider else lambda: tfq.differentiators.ForwardDifference()
+        self.eps = eps
         self.sampling_repetitions = sampling_repetitions
         self.real_values_provider = real_values_provider
         self.pauli_strings_and_indexes = pauli_strings_and_indexes
@@ -54,7 +57,7 @@ class PrecomputedExpectationsProvider(RealExpectationsProvider):
             self.pauli_strings = pauli_strings_and_indexes[0]
             self.qubit_to_string_index = pauli_strings_and_indexes[1]
         else:
-            self.disc_hamiltonians, self.qubit_to_string_index = get_discriminator(real)
+            self.pauli_strings, self.qubit_to_string_index = get_discriminator(real)
         self.real_state_parameters = real_state_parameters
         if use_analytical_expectation:
             self.real_expectation = tfq.layers.Expectation(differentiator=gradient_method_provider())
@@ -66,29 +69,46 @@ class PrecomputedExpectationsProvider(RealExpectationsProvider):
                 tfq.layers.SampledExpectation(differentiator=gradient_method_provider()))
         self.expectations = {}
 
-    def get_expectations_for_parameters(self, parameters: List[Any] = None) -> Dict[Any, Dict[cirq.PauliString, float]]:
+    def get_expectations_for_parameters(self, parameters: List[Any] = None, filter_small_expectations: bool = False) \
+            -> Dict[Any, Dict[cirq.PauliString, float]]:
         if parameters is None:
             parameters = self.real_state_parameters
-        return {param: {pauli_string: expectation for pauli_string, expectation
-                        in self.expectations.setdefault(param, {ps: e for ps, e in zip(self.pauli_strings,
-                                                                                       [el.numpy() for el in
-                                                                                        self._get_real_expectation(
-                                                                                            param)[0]])}).items()}
-                for param in parameters if param in self.real_state_parameters}
+        expectations_dict = \
+            {param: {pauli_string: expectation for pauli_string, expectation
+                     in self.expectations.setdefault(param, {ps: e for ps, e in zip(self.pauli_strings,
+                                                                                    [el.numpy() for el in
+                                                                                     self._get_real_expectation(
+                                                                                         param)[0]])}).items()}
+             for param in parameters if param in self.real_state_parameters}
+        if filter_small_expectations:
+            string_with_non_negligible_expectations = set()
+            for _, strings_to_exp in expectations_dict.items():
+                for pauli_string, exp in strings_to_exp.items():
+                    if abs(exp) > self.eps:
+                        string_with_non_negligible_expectations.add(pauli_string)
+            strings_with_negligible_expectations = set(self.pauli_strings) - string_with_non_negligible_expectations
+            for strings_to_exp in expectations_dict.values():
+                for pauli_string in strings_with_negligible_expectations:
+                    strings_to_exp.pop(pauli_string, None)
+        return expectations_dict
 
-    def get_expectations_for_random_batch(self, size: int = None) -> List[List[float]]:
+    def get_expectations_for_random_batch(self, size: int = None, filter_small_expectations: bool = False) \
+            -> Tuple[List[List[float]], List[cirq.PauliString]]:
         if size is None or size >= len(self.real_state_parameters):
-            expectations_dict = self.get_expectations_for_parameters()
+            expectations_dict = self.get_expectations_for_parameters(
+                filter_small_expectations=filter_small_expectations)
         else:
             expectations_dict = self.get_expectations_for_parameters(
-                random.sample(list(self.real_state_parameters), min(size, len(self.real_state_parameters))))
+                random.sample(list(self.real_state_parameters), min(size, len(self.real_state_parameters))),
+                filter_small_expectations=filter_small_expectations)
         result = []
+        string_used = list(list(expectations_dict.values())[0].keys())
         for _, string_exp in expectations_dict.items():
             exps = []
-            for string in self.pauli_strings:
+            for string in string_used:
                 exps.append(string_exp[string])
             result.append(exps)
-        return result
+        return result, string_used
 
     def get_pauli_strings_and_indexes(self) -> Tuple[List[cirq.PauliString], Dict[cirq.Qid, List[int]]]:
         return self.pauli_strings_and_indexes
@@ -122,7 +142,8 @@ class Interpolation1DExpectationsProvider(RealExpectationsProvider):
         self.interpolation_tuples = None
         self.expectations = {}
 
-    def get_expectations_for_parameters(self, parameters: List[Any]) -> Dict[Any, Dict[cirq.PauliString, float]]:
+    def get_expectations_for_parameters(self, parameters: List[Any], filter_small_expectations: bool = False) \
+            -> Dict[Any, Dict[cirq.PauliString, float]]:
         if self.interpolation_tuples is None:
             self.initialize()
         return \
@@ -166,38 +187,49 @@ class WassersteinGanExpectationProvider(RealExpectationsProvider):
     def __init__(self,
                  precomputed_expectations_provider: PrecomputedExpectationsProvider,
                  gen_input_dim: int,
-                 hidden_dim: int,
+                 hidden_dim: List[int],
                  penalty_factor: int = 10,
                  epochs: int = 50,
                  batch_size: int = 4):
         self.batch_size = batch_size
         self.epochs = epochs
-        self.input_dim = len(precomputed_expectations_provider.pauli_strings)
         self.gen_input_dim = gen_input_dim
         self.hidden_dim = hidden_dim
         self.penalty_factor = penalty_factor
         self.generator_optimizer = tf.keras.optimizers.Adam(1e-4)
         self.discriminator_optimizer = tf.keras.optimizers.Adam(1e-4)
         self.precomputed_expectations_provider = precomputed_expectations_provider
-        self.discriminator = self._discriminator()
-        self.generator = self._generator()
+        self.used_pauli_strings = precomputed_expectations_provider.pauli_strings
+        self.input_dim = len(self.used_pauli_strings)
+        self.discriminator = None
+        self.generator = None
         self.expectations = {}
         self.initialized = False
 
-    def get_expectations_for_parameters(self, parameters: List[Any]) -> Dict[Any, Dict[cirq.PauliString, float]]:
+    def get_expectations_for_parameters(self, parameters: List[Any], filter_small_expectations: bool = False) \
+            -> Dict[Any, Dict[cirq.PauliString, float]]:
         if not self.initialized:
             self.initialize()
-            self.initialized = True
-        return {param: self.expectations.setdefault(param,
-                                                    {pauli_string: exp for pauli_string, exp in
-                                                     zip(self.precomputed_expectations_provider.pauli_strings,
-                                                         self.generator(
-                                                             tf.random.normal([1, self.gen_input_dim])).numpy()[0])})
-                for param in parameters}
+        generated_expectations = {param: self.expectations.setdefault(param,
+                                                                      {pauli_string: exp for pauli_string, exp in
+                                                                       zip(self.used_pauli_strings,
+                                                                           self._get_scaled_generated_vector())})
+                                  for param in parameters}
+        for param, string_to_expectation in generated_expectations.items():
+            for pauli_string in self.precomputed_expectations_provider.pauli_strings:
+                if pauli_string not in string_to_expectation:
+                    string_to_expectation[pauli_string] = 0
+
+        return generated_expectations
 
     def initialize(self):
-        dataset = tf.data.Dataset.from_tensor_slices(
-            self.precomputed_expectations_provider.get_expectations_for_random_batch())
+        expectations, pauli_strings = self.precomputed_expectations_provider.get_expectations_for_random_batch(
+            filter_small_expectations=True)
+        self.used_pauli_strings = pauli_strings
+        self.input_dim = len(self.used_pauli_strings)
+        self.discriminator = self._discriminator()
+        self.generator = self._generator()
+        dataset = tf.data.Dataset.from_tensor_slices((np.array(expectations) + 1) / 2)
         dataset = dataset.shuffle(buffer_size=len(self.precomputed_expectations_provider.real_state_parameters)) \
             .batch(self.batch_size)
         for epoch in range(self.epochs):
@@ -207,6 +239,7 @@ class WassersteinGanExpectationProvider(RealExpectationsProvider):
                 self.train_step(batch)
 
             print('Time for epoch {} is {} sec'.format(epoch + 1, time.time() - start))
+        self.initialized = True
 
     def get_pauli_strings_and_indexes(self) -> Tuple[List[cirq.PauliString], Dict[cirq.Qid, List[int]]]:
         return self.precomputed_expectations_provider.pauli_strings_and_indexes
@@ -231,10 +264,12 @@ class WassersteinGanExpectationProvider(RealExpectationsProvider):
 
     def _generator(self):
         model = tf.keras.Sequential()
-        model.add(layers.Dense(self.hidden_dim, use_bias=True, input_shape=(self.gen_input_dim,)))
-        model.add(layers.BatchNormalization())
-        model.add(layers.LeakyReLU())
-        model.add(layers.Dense(self.input_dim, use_bias=True, input_shape=(self.hidden_dim,)))
+        dims = [self.gen_input_dim] + self.hidden_dim
+        for i in range(len(dims) - 1):
+            model.add(layers.Dense(dims[i + 1], use_bias=True, input_shape=(dims[i],)))
+            # model.add(layers.BatchNormalization())
+            model.add(layers.LeakyReLU())
+        model.add(layers.Dense(self.input_dim, use_bias=True, input_shape=(dims[-1],)))
         model.add(layers.Activation(tf.nn.sigmoid))
         return model
 
@@ -244,9 +279,11 @@ class WassersteinGanExpectationProvider(RealExpectationsProvider):
 
     def _discriminator(self):
         model = tf.keras.Sequential()
-        model.add(layers.Dense(self.hidden_dim, use_bias=True, input_shape=(self.input_dim,)))
-        model.add(layers.LeakyReLU())
-        model.add(layers.Dense(1, use_bias=True, input_shape=(self.hidden_dim,)))
+        dims = [self.input_dim] + self.hidden_dim
+        for i in range(len(dims) - 1):
+            model.add(layers.Dense(dims[i + 1], use_bias=True, input_shape=(dims[i],)))
+            model.add(layers.LeakyReLU())
+        model.add(layers.Dense(1, use_bias=True, input_shape=(dims[-1],)))
         return model
 
     def _discriminator_loss(self, real_vector, fake_vector, real_sample, gen_sample):
@@ -258,6 +295,9 @@ class WassersteinGanExpectationProvider(RealExpectationsProvider):
         grad_norm = tf.sqrt(tf.reduce_sum(grad ** 2, axis=1))
         grad_penalty = self.penalty_factor * tf.reduce_mean((grad_norm - 1) ** 2)
         return tf.reduce_mean(fake_vector) - tf.reduce_mean(real_vector) + grad_penalty
+
+    def _get_scaled_generated_vector(self):
+        return (self.generator(tf.random.normal([1, self.gen_input_dim])).numpy()[0] * 2) - 1
 
 
 class ExpectationProviderType(Enum):
