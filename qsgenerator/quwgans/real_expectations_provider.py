@@ -230,9 +230,9 @@ class WassersteinGanExpectationProvider(RealExpectationsProvider):
 
         return generated_expectations
 
-    def initialize(self):
+    def initialize(self, filter_small_expectations: bool = True):
         expectations, pauli_strings = self.precomputed_expectations_provider.get_expectations_for_random_batch(
-            filter_small_expectations=True)
+            filter_small_expectations=filter_small_expectations)
         self.used_pauli_strings = pauli_strings
         self.input_dim = len(self.used_pauli_strings)
         self.discriminator = self._discriminator()
