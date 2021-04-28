@@ -195,7 +195,9 @@ class WassersteinGanExpectationProvider(RealExpectationsProvider):
                  batch_size: int = 4,
                  n_crit: int = 5,
                  report_interval_epochs: int = 200,
-                 use_neptune: bool = False):
+                 use_neptune: bool = False,
+                 filter_small_expectations: bool = True):
+        self.filter_small_expectations = filter_small_expectations
         self.use_neptune = use_neptune
         self.n_crit = n_crit
         self.batch_size = batch_size
@@ -230,9 +232,9 @@ class WassersteinGanExpectationProvider(RealExpectationsProvider):
 
         return generated_expectations
 
-    def initialize(self, filter_small_expectations: bool = True):
+    def initialize(self):
         expectations, pauli_strings = self.precomputed_expectations_provider.get_expectations_for_random_batch(
-            filter_small_expectations=filter_small_expectations)
+            filter_small_expectations=self.filter_small_expectations)
         self.used_pauli_strings = pauli_strings
         self.input_dim = len(self.used_pauli_strings)
         self.discriminator = self._discriminator()
