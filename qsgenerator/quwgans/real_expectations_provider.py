@@ -196,7 +196,12 @@ class WassersteinGanExpectationProvider(RealExpectationsProvider):
                  n_crit: int = 5,
                  report_interval_epochs: int = 200,
                  use_neptune: bool = False,
-                 filter_small_expectations: bool = True):
+                 filter_small_expectations: bool = True,
+                 use_convolutions: bool = False,
+                 alpha: float = 0.0001,
+                 beta_1: float = 0,
+                 beta_2: float = 0.9):
+        self.use_convolutions = use_convolutions
         self.filter_small_expectations = filter_small_expectations
         self.use_neptune = use_neptune
         self.n_crit = n_crit
@@ -205,8 +210,8 @@ class WassersteinGanExpectationProvider(RealExpectationsProvider):
         self.gen_input_dim = gen_input_dim
         self.hidden_dim = hidden_dim
         self.penalty_factor = penalty_factor
-        self.generator_optimizer = tf.keras.optimizers.Adam(1e-4)
-        self.discriminator_optimizer = tf.keras.optimizers.Adam(1e-4)
+        self.generator_optimizer = tf.keras.optimizers.Adam(alpha, beta_1=beta_1, beta_2=beta_2)
+        self.discriminator_optimizer = tf.keras.optimizers.Adam(alpha, beta_1=beta_1, beta_2=beta_2)
         self.precomputed_expectations_provider = precomputed_expectations_provider
         self.used_pauli_strings = precomputed_expectations_provider.pauli_strings
         self.input_dim = len(self.used_pauli_strings)
@@ -294,12 +299,22 @@ class WassersteinGanExpectationProvider(RealExpectationsProvider):
     def _generator(self):
         model = tf.keras.Sequential()
         dims = [self.gen_input_dim] + self.hidden_dim
-        for i in range(len(dims) - 1):
-            model.add(layers.Dense(dims[i + 1], use_bias=True, input_shape=(dims[i],)))
+        if self.use_convolutions:
+            model.add(layers.Dense(dims[1], use_bias=True, input_shape=(dims[0],)))
             model.add(layers.BatchNormalization())
             model.add(layers.LeakyReLU())
-        model.add(layers.Dense(self.input_dim, use_bias=True, input_shape=(dims[-1],)))
-        model.add(layers.Activation(tf.nn.sigmoid))
+            for i in range(1, len(dims) - 1):
+                model.add(layers.Conv1DTranspose(dims[i], 5, 1, padding='same', use_bias=False))
+                model.add(layers.BatchNormalization())
+                model.add(layers.LeakyReLU())
+            model.add(layers.Conv1DTranspose(1, 5, 1, use_bias=False, activation='sigmoid'))
+        else:
+            for i in range(len(dims) - 1):
+                model.add(layers.Dense(dims[i + 1], use_bias=True, input_shape=(dims[i],)))
+                model.add(layers.BatchNormalization())
+                model.add(layers.LeakyReLU())
+            model.add(layers.Dense(self.input_dim, use_bias=True, input_shape=(dims[-1],)))
+            model.add(layers.Activation(tf.nn.sigmoid))
         return model
 
     @staticmethod

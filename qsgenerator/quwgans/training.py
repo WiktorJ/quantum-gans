@@ -48,8 +48,9 @@ class Trainer:
         self.real_expectations_provider = real_expectations_provider
 
         self.disc_hamiltonians, self.qubit_to_string_index = self.real_expectations_provider.get_pauli_strings_and_indexes()
-        self.A = np.array([get_zero_ones_array(len(self.disc_hamiltonians), indices) for indices in
-                           self.qubit_to_string_index.values()])
+        self.base_A = np.array([get_zero_ones_array(len(self.disc_hamiltonians), indices) for indices in
+                                self.qubit_to_string_index.values()])
+        self.base_A = np.array([[x for pair in zip(A_i, A_i) for x in pair] for A_i in self.base_A])
         self.b = np.ones(len(self.qubit_to_string_index))
         self.rank = rank
         initial_prob = 1 / rank
@@ -155,17 +156,26 @@ class Trainer:
         return get_fidelity_grid(generated, real), get_generator_fidelity_grid(generated), generated, real
 
     def find_max_w_h_pairs(self):
-        c = (self.get_all_generator_expectations(self.disc_hamiltonians).numpy() - self.get_real_expectation(
-            self.disc_hamiltonians)).flatten()
-        res = linprog(-c, A_ub=self.A, b_ub=self.b, bounds=(0, 1))
-
-        return [res.x[i] for i in range(len(self.disc_hamiltonians)) if res.x[i] > 1.e-5], \
-               [self.disc_hamiltonians[i] for i in range(len(self.disc_hamiltonians)) if res.x[i] > 1.e-5], \
-               [c[i] for i in range(len(self.disc_hamiltonians)) if res.x[i] > 1.e-5]
+        gen_exps = self.get_all_generator_expectations(self.disc_hamiltonians).numpy()
+        real_exps = self.get_real_expectation(self.disc_hamiltonians)
+        c = (gen_exps - real_exps).flatten()
+        # print(f"gen_exps: {gen_exps}, real_exps: {real_exps}, c: {c}")
+        # print()
+        extended_c = np.array([x for pair in zip(c, -c) for x in pair])
+        res = linprog(-extended_c, A_ub=self.base_A, b_ub=self.b, bounds=(0, None))
+        weights = [res.x[i] - res.x[i + 1] for i in range(0, len(res.x), 2)]
+        return [weights[i] for i in range(len(self.disc_hamiltonians)) if abs(weights[i]) > 1.e-5], \
+               [self.disc_hamiltonians[i] for i in range(len(self.disc_hamiltonians)) if abs(weights[i]) > 1.e-5], \
+               [c[i] for i in range(len(self.disc_hamiltonians)) if abs(weights[i]) > 1.e-5]
 
     def gen_cost(self, max_w, max_h):
         exps = self.get_all_generator_expectations(max_h)
-        return tf.reduce_sum([w * exp for w, exp in zip(max_w, exps)])
+        cost = tf.reduce_sum([w * exp for w, exp in zip(max_w, exps[0])])
+        # print("H, exp, w")
+        # print(list(zip([str(el) for el in max_h], exps.numpy()[0], max_w)))
+        # print(f"cost: {cost}")
+        # print()
+        return cost
 
     def real_distance(self, max_w, max_h):
         exps = self.get_real_expectation(max_h)
@@ -194,6 +204,7 @@ class Trainer:
         else:
             parameter_to_expectation_dict = \
                 self.real_expectations_provider.get_expectations_for_parameters(self.g_values)
+            # print(f"params: {parameter_to_expectation_dict}, g: {self.g_values}")
             return functools.reduce(lambda acc, x: acc + (1 / (len(self.g_values))) * x,
                                     [self._filter_expectations_by_pauli_strings(operators, pauli_string_to_expectation)
                                      for

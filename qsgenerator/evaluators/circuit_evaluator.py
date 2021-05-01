@@ -101,4 +101,3 @@ class CircuitEvaluator:
         else:
             self.symbol_value_pairs = pairs
 
-cirq.Circuit().all_operations()
