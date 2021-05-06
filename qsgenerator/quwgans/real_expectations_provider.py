@@ -200,7 +200,8 @@ class WassersteinGanExpectationProvider(RealExpectationsProvider):
                  use_convolutions: bool = False,
                  alpha: float = 0.0001,
                  beta_1: float = 0,
-                 beta_2: float = 0.9):
+                 beta_2: float = 0.9,
+                 seed: int = None):
         self.use_convolutions = use_convolutions
         self.filter_small_expectations = filter_small_expectations
         self.use_neptune = use_neptune
@@ -220,6 +221,7 @@ class WassersteinGanExpectationProvider(RealExpectationsProvider):
         self.expectations = {}
         self.initialized = False
         self.report_interval_epochs = report_interval_epochs
+        self.seed = np.random.randint(0, 2 ** 31 - 1) if seed is None else seed
 
     def get_expectations_for_parameters(self, parameters: List[Any], filter_small_expectations: bool = False) \
             -> Dict[Any, Dict[cirq.PauliString, float]]:
@@ -242,9 +244,18 @@ class WassersteinGanExpectationProvider(RealExpectationsProvider):
             filter_small_expectations=self.filter_small_expectations)
         self.used_pauli_strings = pauli_strings
         self.input_dim = len(self.used_pauli_strings)
+        if self.use_convolutions:
+            conv_size = 111
+            real_size = len(pauli_strings)
+            extra_dims = conv_size - real_size
+            for exps in expectations:
+                for _ in range(extra_dims):
+                    exps.append(0)
+            self.input_dim = conv_size
+
         self.discriminator = self._discriminator()
         self.generator = self._generator()
-        dataset = tf.data.Dataset.from_tensor_slices((np.array(expectations) + 1) / 2)
+        dataset = tf.data.Dataset.from_tensor_slices((np.array(expectations, dtype='float32') + 1) / 2)
         dataset = dataset.shuffle(buffer_size=len(self.precomputed_expectations_provider.real_state_parameters)) \
             .batch(self.batch_size)
         start = time.time()
@@ -261,6 +272,7 @@ class WassersteinGanExpectationProvider(RealExpectationsProvider):
             if self.use_neptune:
                 neptune.log_metric("wgan_gen_loss", average_epoch_gen_loss)
                 neptune.log_metric("wgan_disc_loss", average_epoch_disc_loss)
+                neptune.log_text("wgan_seed", str(self.seed))
             if epoch % self.report_interval_epochs == 0:
                 print(f"Epoch: {epoch}, time for last {self.report_interval_epochs} epochs {time.time() - start}")
                 print(f"Last epoch gen loss: {average_epoch_gen_loss}, disc loss: {average_epoch_disc_loss}")
@@ -280,7 +292,7 @@ class WassersteinGanExpectationProvider(RealExpectationsProvider):
                 real_output = self.discriminator(batch, training=True)
                 fake_output = self.discriminator(generated_expectations, training=True)
 
-                disc_loss = self._discriminator_loss(real_output, fake_output, generated_expectations, batch)
+                disc_loss = self._discriminator_loss(real_output, fake_output, batch, generated_expectations)
             avg_disc_loss += (1 / self.n_crit) * disc_loss.numpy()
             gradients_of_discriminator = disc_tape.gradient(disc_loss, self.discriminator.trainable_variables)
             self.discriminator_optimizer.apply_gradients(
@@ -300,20 +312,49 @@ class WassersteinGanExpectationProvider(RealExpectationsProvider):
         model = tf.keras.Sequential()
         dims = [self.gen_input_dim] + self.hidden_dim
         if self.use_convolutions:
-            model.add(layers.Dense(dims[1], use_bias=True, input_shape=(dims[0],)))
+            model.add(layers.Dense(27 * 256,
+                                   use_bias=True,
+                                   input_shape=(self.gen_input_dim,),
+                                   kernel_initializer=tf.keras.initializers.GlorotUniform(seed=self.seed)))
             model.add(layers.BatchNormalization())
             model.add(layers.LeakyReLU())
-            for i in range(1, len(dims) - 1):
-                model.add(layers.Conv1DTranspose(dims[i], 5, 1, padding='same', use_bias=False))
-                model.add(layers.BatchNormalization())
-                model.add(layers.LeakyReLU())
-            model.add(layers.Conv1DTranspose(1, 5, 1, use_bias=False, activation='sigmoid'))
+
+            model.add(layers.Reshape((27, 256)))
+
+            model.add(layers.Conv1DTranspose(128,
+                                             (5,),
+                                             (1,),
+                                             padding='same',
+                                             use_bias=False,
+                                             kernel_initializer=tf.keras.initializers.GlorotUniform(
+                                                 seed=self.seed)))
+            model.add(layers.BatchNormalization())
+            model.add(layers.LeakyReLU())
+
+            model.add(layers.Conv1DTranspose(64,
+                                             (5,),
+                                             (2,),
+                                             padding='same',
+                                             use_bias=False,
+                                             kernel_initializer=tf.keras.initializers.GlorotUniform(
+                                                 seed=self.seed)))
+            model.add(layers.BatchNormalization())
+            model.add(layers.LeakyReLU())
+
+            model.add(layers.Conv1DTranspose(1, (5,), (2,), use_bias=False, activation='sigmoid'))
+            assert model.output_shape == (None, self.input_dim, 1), print(model.output_shape)
         else:
             for i in range(len(dims) - 1):
-                model.add(layers.Dense(dims[i + 1], use_bias=True, input_shape=(dims[i],)))
+                model.add(layers.Dense(dims[i + 1],
+                                       use_bias=True,
+                                       input_shape=(dims[i],),
+                                       kernel_initializer=tf.keras.initializers.GlorotUniform(seed=self.seed)))
                 model.add(layers.BatchNormalization())
                 model.add(layers.LeakyReLU())
-            model.add(layers.Dense(self.input_dim, use_bias=True, input_shape=(dims[-1],)))
+            model.add(layers.Dense(self.input_dim,
+                                   use_bias=True,
+                                   input_shape=(dims[-1],),
+                                   kernel_initializer=tf.keras.initializers.GlorotUniform(seed=self.seed)))
             model.add(layers.Activation(tf.nn.sigmoid))
         return model
 
@@ -324,16 +365,36 @@ class WassersteinGanExpectationProvider(RealExpectationsProvider):
     def _discriminator(self):
         model = tf.keras.Sequential()
         dims = [self.input_dim] + self.hidden_dim
-        for i in range(len(dims) - 1):
-            model.add(layers.Dense(dims[i + 1], use_bias=True, input_shape=(dims[i],)))
+        if self.use_convolutions:
+            model.add(layers.Conv1D(64, (5,), strides=(2,), padding='same', input_shape=(self.input_dim, 1)))
             model.add(layers.LeakyReLU())
-        model.add(layers.Dense(1, use_bias=True, input_shape=(dims[-1],)))
+            model.add(layers.Dropout(0.3))
+
+            model.add(layers.Conv1D(128, (5,), strides=(2,), padding='same'))
+            model.add(layers.LeakyReLU())
+            model.add(layers.Dropout(0.3))
+
+            model.add(layers.Flatten())
+            model.add(layers.Dense(1))
+        else:
+            for i in range(len(dims) - 1):
+                model.add(layers.Dense(dims[i + 1],
+                                       use_bias=True,
+                                       input_shape=(dims[i],),
+                                       kernel_initializer=tf.keras.initializers.GlorotUniform(seed=self.seed)))
+                model.add(layers.LeakyReLU())
+            model.add(layers.Dense(1,
+                                   use_bias=True,
+                                   input_shape=(dims[-1],),
+                                   kernel_initializer=tf.keras.initializers.GlorotUniform(seed=self.seed)))
         return model
 
     def _discriminator_loss(self, real_vector, fake_vector, real_sample, gen_sample):
         eps = tf.Variable(tf.random.uniform([self.input_dim], minval=0., maxval=1.))
-        x_hat = tf.Variable(eps * real_sample + (1 - eps) * gen_sample)
+        gen_sample = tf.reshape(gen_sample, [gen_sample.shape[0], gen_sample.shape[1]])
+        x_hat = eps * real_sample + (1 - eps) * gen_sample
         with tf.GradientTape() as pen_tape:
+            pen_tape.watch(x_hat)
             out = self.discriminator(x_hat, training=True)
         grad = pen_tape.gradient(out, x_hat)
         grad_norm = tf.sqrt(tf.reduce_sum(grad ** 2, axis=1))
@@ -341,6 +402,9 @@ class WassersteinGanExpectationProvider(RealExpectationsProvider):
         return tf.reduce_mean(fake_vector) - tf.reduce_mean(real_vector) + grad_penalty
 
     def _get_scaled_generated_vector(self):
+        if self.use_convolutions:
+            return [el[0] for el in ((self.generator(tf.random.normal([1, self.gen_input_dim])).numpy()[0] * 2) - 1)[
+                   :len(self.used_pauli_strings)]]
         return (self.generator(tf.random.normal([1, self.gen_input_dim])).numpy()[0] * 2) - 1
 
 
