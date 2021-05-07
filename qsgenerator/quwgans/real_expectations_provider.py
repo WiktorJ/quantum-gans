@@ -240,12 +240,13 @@ class WassersteinGanExpectationProvider(RealExpectationsProvider):
         return generated_expectations
 
     def initialize(self):
+        self.initialized = True
         expectations, pauli_strings = self.precomputed_expectations_provider.get_expectations_for_random_batch(
             filter_small_expectations=self.filter_small_expectations)
         self.used_pauli_strings = pauli_strings
         self.input_dim = len(self.used_pauli_strings)
         if self.use_convolutions:
-            conv_size = 111
+            conv_size = 108
             real_size = len(pauli_strings)
             extra_dims = conv_size - real_size
             for exps in expectations:
@@ -256,6 +257,7 @@ class WassersteinGanExpectationProvider(RealExpectationsProvider):
         self.discriminator = self._discriminator()
         self.generator = self._generator()
         dataset = tf.data.Dataset.from_tensor_slices((np.array(expectations, dtype='float32') + 1) / 2)
+        # dataset = tf.data.Dataset.from_tensor_slices(np.array(expectations, dtype='float32'))
         dataset = dataset.shuffle(buffer_size=len(self.precomputed_expectations_provider.real_state_parameters)) \
             .batch(self.batch_size)
         start = time.time()
@@ -263,7 +265,7 @@ class WassersteinGanExpectationProvider(RealExpectationsProvider):
             epoch_gen_losses = []
             epoch_disc_losses = []
             for batch in dataset:
-                gen_loss, disc_loss = self.train_step(batch)
+                gen_loss, disc_loss, pen_loss = self.train_step(batch)
 
                 epoch_gen_losses.append(gen_loss)
                 epoch_disc_losses.append(disc_loss)
@@ -272,18 +274,19 @@ class WassersteinGanExpectationProvider(RealExpectationsProvider):
             if self.use_neptune:
                 neptune.log_metric("wgan_gen_loss", average_epoch_gen_loss)
                 neptune.log_metric("wgan_disc_loss", average_epoch_disc_loss)
+                neptune.log_metric("wgan_pen_loss", average_epoch_disc_loss)
                 neptune.log_text("wgan_seed", str(self.seed))
             if epoch % self.report_interval_epochs == 0:
                 print(f"Epoch: {epoch}, time for last {self.report_interval_epochs} epochs {time.time() - start}")
                 print(f"Last epoch gen loss: {average_epoch_gen_loss}, disc loss: {average_epoch_disc_loss}")
                 start = time.time()
-        self.initialized = True
 
     def get_pauli_strings_and_indexes(self) -> Tuple[List[cirq.PauliString], Dict[cirq.Qid, List[int]]]:
         return self.precomputed_expectations_provider.pauli_strings_and_indexes
 
     def train_step(self, batch):
         avg_disc_loss = 0
+        avg_pen_loss = 0
         for _ in range(self.n_crit):
             noise = tf.random.normal([batch.shape[0], self.gen_input_dim])
 
@@ -292,13 +295,15 @@ class WassersteinGanExpectationProvider(RealExpectationsProvider):
                 real_output = self.discriminator(batch, training=True)
                 fake_output = self.discriminator(generated_expectations, training=True)
 
-                disc_loss = self._discriminator_loss(real_output, fake_output, batch, generated_expectations)
+                disc_loss, pen_loss = self._discriminator_loss(real_output, fake_output, batch, generated_expectations)
             avg_disc_loss += (1 / self.n_crit) * disc_loss.numpy()
-            gradients_of_discriminator = disc_tape.gradient(disc_loss, self.discriminator.trainable_variables)
+            avg_pen_loss += (1 / self.n_crit) * pen_loss.numpy()
+            gradients_of_discriminator = disc_tape.gradient(pen_loss, self.discriminator.trainable_variables)
             self.discriminator_optimizer.apply_gradients(
                 zip(gradients_of_discriminator, self.discriminator.trainable_variables))
 
-        noise = tf.random.normal([batch.shape[0], self.gen_input_dim])
+        # noise = tf.random.normal([batch.shape[0], self.gen_input_dim])
+        noise = tf.random.uniform([batch.shape[0], self.gen_input_dim], minval=-1, maxval=1)
         with tf.GradientTape() as gen_tape:
             generated_expectations = self.generator(noise, training=True)
             fake_output = self.discriminator(generated_expectations, training=True)
@@ -306,55 +311,65 @@ class WassersteinGanExpectationProvider(RealExpectationsProvider):
         gradients_of_generator = gen_tape.gradient(gen_loss, self.generator.trainable_variables)
         self.generator_optimizer.apply_gradients(zip(gradients_of_generator, self.generator.trainable_variables))
 
-        return gen_loss.numpy(), avg_disc_loss
+        return gen_loss.numpy(), avg_disc_loss, avg_pen_loss
 
     def _generator(self):
         model = tf.keras.Sequential()
         dims = [self.gen_input_dim] + self.hidden_dim
         if self.use_convolutions:
-            model.add(layers.Dense(27 * 256,
+            model.add(layers.Dense(24 * 256,
                                    use_bias=True,
                                    input_shape=(self.gen_input_dim,),
-                                   kernel_initializer=tf.keras.initializers.GlorotUniform(seed=self.seed)))
+                                   kernel_initializer=tf.keras.initializers.GlorotNormal(seed=self.seed)))
             model.add(layers.BatchNormalization())
-            model.add(layers.LeakyReLU())
+            model.add(layers.ReLU())
 
-            model.add(layers.Reshape((27, 256)))
+            model.add(layers.Reshape((24, 256)))
 
             model.add(layers.Conv1DTranspose(128,
-                                             (5,),
-                                             (1,),
-                                             padding='same',
-                                             use_bias=False,
-                                             kernel_initializer=tf.keras.initializers.GlorotUniform(
-                                                 seed=self.seed)))
-            model.add(layers.BatchNormalization())
-            model.add(layers.LeakyReLU())
-
-            model.add(layers.Conv1DTranspose(64,
-                                             (5,),
+                                             (13,),
                                              (2,),
                                              padding='same',
                                              use_bias=False,
-                                             kernel_initializer=tf.keras.initializers.GlorotUniform(
+                                             kernel_initializer=tf.keras.initializers.GlorotNormal(
                                                  seed=self.seed)))
             model.add(layers.BatchNormalization())
-            model.add(layers.LeakyReLU())
+            model.add(layers.ReLU())
 
-            model.add(layers.Conv1DTranspose(1, (5,), (2,), use_bias=False, activation='sigmoid'))
+            model.add(layers.Conv1DTranspose(64,
+                                             (13,),
+                                             (2,),
+                                             padding='same',
+                                             use_bias=False,
+                                             kernel_initializer=tf.keras.initializers.GlorotNormal(
+                                                 seed=self.seed)))
+            model.add(layers.BatchNormalization())
+            model.add(layers.ReLU())
+
+            # model.add(layers.Conv1DTranspose(64,
+            #                                  (13,),
+            #                                  (2,),
+            #                                  padding='same',
+            #                                  use_bias=False,
+            #                                  kernel_initializer=tf.keras.initializers.GlorotNormal(
+            #                                      seed=self.seed)))
+            # model.add(layers.BatchNormalization())
+            # model.add(layers.ReLU())
+
+            model.add(layers.Conv1DTranspose(1, (13,), (1,), use_bias=False, activation='sigmoid'))
             assert model.output_shape == (None, self.input_dim, 1), print(model.output_shape)
         else:
             for i in range(len(dims) - 1):
                 model.add(layers.Dense(dims[i + 1],
                                        use_bias=True,
                                        input_shape=(dims[i],),
-                                       kernel_initializer=tf.keras.initializers.GlorotUniform(seed=self.seed)))
+                                       kernel_initializer=tf.keras.initializers.GlorotNormal(seed=self.seed)))
                 model.add(layers.BatchNormalization())
                 model.add(layers.LeakyReLU())
             model.add(layers.Dense(self.input_dim,
                                    use_bias=True,
                                    input_shape=(dims[-1],),
-                                   kernel_initializer=tf.keras.initializers.GlorotUniform(seed=self.seed)))
+                                   kernel_initializer=tf.keras.initializers.GlorotNormal(seed=self.seed)))
             model.add(layers.Activation(tf.nn.sigmoid))
         return model
 
@@ -366,13 +381,21 @@ class WassersteinGanExpectationProvider(RealExpectationsProvider):
         model = tf.keras.Sequential()
         dims = [self.input_dim] + self.hidden_dim
         if self.use_convolutions:
-            model.add(layers.Conv1D(64, (5,), strides=(2,), padding='same', input_shape=(self.input_dim, 1)))
+            model.add(layers.Conv1D(64, (13,), strides=(2,), padding='same', input_shape=(self.input_dim, 1)))
             model.add(layers.LeakyReLU())
             model.add(layers.Dropout(0.3))
 
-            model.add(layers.Conv1D(128, (5,), strides=(2,), padding='same'))
+            model.add(layers.Conv1D(128, (13,), strides=(2,), padding='same'))
             model.add(layers.LeakyReLU())
             model.add(layers.Dropout(0.3))
+
+            model.add(layers.Conv1D(256, (13,), strides=(2,), padding='same'))
+            model.add(layers.LeakyReLU())
+            model.add(layers.Dropout(0.3))
+
+            # model.add(layers.Conv1D(512, (13,), strides=(2,), padding='same'))
+            # model.add(layers.LeakyReLU())
+            # model.add(layers.Dropout(0.3))
 
             model.add(layers.Flatten())
             model.add(layers.Dense(1))
@@ -381,12 +404,12 @@ class WassersteinGanExpectationProvider(RealExpectationsProvider):
                 model.add(layers.Dense(dims[i + 1],
                                        use_bias=True,
                                        input_shape=(dims[i],),
-                                       kernel_initializer=tf.keras.initializers.GlorotUniform(seed=self.seed)))
+                                       kernel_initializer=tf.keras.initializers.GlorotNormal(seed=self.seed)))
                 model.add(layers.LeakyReLU())
             model.add(layers.Dense(1,
                                    use_bias=True,
                                    input_shape=(dims[-1],),
-                                   kernel_initializer=tf.keras.initializers.GlorotUniform(seed=self.seed)))
+                                   kernel_initializer=tf.keras.initializers.GlorotNormal(seed=self.seed)))
         return model
 
     def _discriminator_loss(self, real_vector, fake_vector, real_sample, gen_sample):
@@ -399,13 +422,26 @@ class WassersteinGanExpectationProvider(RealExpectationsProvider):
         grad = pen_tape.gradient(out, x_hat)
         grad_norm = tf.sqrt(tf.reduce_sum(grad ** 2, axis=1))
         grad_penalty = self.penalty_factor * tf.reduce_mean((grad_norm - 1) ** 2)
-        return tf.reduce_mean(fake_vector) - tf.reduce_mean(real_vector) + grad_penalty
+        base_loss = tf.reduce_mean(fake_vector) - tf.reduce_mean(real_vector)
+        return base_loss, base_loss + grad_penalty
 
     def _get_scaled_generated_vector(self):
         if self.use_convolutions:
-            return [el[0] for el in ((self.generator(tf.random.normal([1, self.gen_input_dim])).numpy()[0] * 2) - 1)[
+            return [el[0] for el in ((self.generator(tf.random.uniform([1, self.gen_input_dim], minval=-1, maxval=1)).numpy()[0] * 2) - 1)[
                    :len(self.used_pauli_strings)]]
-        return (self.generator(tf.random.normal([1, self.gen_input_dim])).numpy()[0] * 2) - 1
+        return (self.generator(tf.random.uniform([1, self.gen_input_dim], minval=-1, maxval=1)).numpy()[0] * 2) - 1
+
+    # def _get_scaled_generated_vector(self):
+    #     if self.use_convolutions:
+    #         return [el[0] for el in ((self.generator(tf.random.normal([1, self.gen_input_dim])).numpy()[0] * 2) - 1)[
+    #                :len(self.used_pauli_strings)]]
+    #     return (self.generator(tf.random.normal([1, self.gen_input_dim])).numpy()[0] * 2) - 1
+
+    # def _get_scaled_generated_vector(self):
+    #     if self.use_convolutions:
+    #         return [el[0] for el in
+    #                 self.generator(tf.random.normal([1, self.gen_input_dim])).numpy()[0][:len(self.used_pauli_strings)]]
+    #     return self.generator(tf.random.normal([1, self.gen_input_dim])).numpy()[0]
 
 
 class ExpectationProviderType(Enum):
