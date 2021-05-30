@@ -1,9 +1,45 @@
-\chapter{Introduction}\label{chapter:introduction}
-very brief
+\chapter{Introduction} \label{chapter:introduction}
+\section{Problem Statement}
+Generative Modeling aims to learn a conditional probability $P(X|Z = z)$, where $X$ is some observable variable and $Z$ is a target variable. With knowledge of this conditional probability, it is possible to generate new observations $\bar{x} \in X$. In general case, one would not try to obtain the probability $P(X|Z)$ exactly, but learn an approximation. To do so a set of samples $x \in X$ is necessary to train a generator function $G: Z \to X$ which given a target variable $z \in Z$ generates new observation $x \in X$. 
 
-\section{test}
-\label{sec:test}
+In the generative framework, the variable $X$ is a multidimensional vector, in particular it can be used to describe an arbitrary quantum state. With this setup, given a finite set of quantum states $\mathcal{Q} = \set{\ket{\psi_i}}, \ket{\psi_i} \in X \forall i$ the generator function $G$ prepares a new quantum state $\ket{\hat{\psi}}$. This new quantum state is expected to come from the same distribution as the samples in the input set $\mathcal{Q}$.
 
+The only missing piece in the above description is the target variable $Z$. In
+the context of the function $G$, generating the quantum states, we can think
+about $Z$ as a label of the generated state. That is, for a specific $z \in Z$
+the function $G$ always generates the same $\ket{\hat{\psi}}$.
+
+In this work we evaluate different approaches to find the probability $P(X|Z =
+z)$ by learning the function $G$. We also address the limitations of the
+existing methods propose a new one that combines quantum and classical
+generative modeling.
+\section{Previous Work}
+There exist many different types of generative models. In this work we focus on
+one particular type, namely Generative Adversarial Networks (to which we refer
+to as Standard Generative Adversarial Networks - SGANs)
+\cite{goodfellow2014generative}. Many different variations of GANs were proposed
+since their invention
+\cite{mirza2014conditional}\cite{karras2019stylebased}\cite{radford2016unsupervised}.
+In context of this work, particularly interesting are Wasserstein GANs
+(WGANs)\cite{arjovsky2017wasserstein} which minimize \textit{Earth-Mover} distance
+between two probability distribution (see Chapter \ref{chapter:gans}) instead of
+\textit{Jensen–Shannon} divergence (see Chapter \ref{chapter:gans}) as in SGANs.
+
+In recent years there has been an increasing interest in realizing Generative
+Adversarial Networks in Quantum Computing (QC) realm. Dallaire-Demers et al.
+proposed QuGANs \cite{Dallaire_Demers_2018} - Quantum Generative Adversarial Networks
+where generator and discriminator are parametrized quantum circuits. Similarly
+Benedetti et al. proposed fully quantum GANs for pure state approximation \cite{Benedetti_2019}, but
+with different (more suitable for NISQ \cite{Preskill_2018}) learning method.
+Hybrid methods were also explored, Zoufal et al. build qGAN \cite{Zoufal_2019} -
+with parametrized quantum circuit as the generator and classical neural network
+as the discriminator. 
+
+De Palma et al. proposed quantum equivalent of Wasserstein distance of order 1
+\cite{depalma2020quantum} which made the Quantum Wasserstein GANs
+(QWGANs) \cite{kiani2021quantum} possible. This variation of quantum GANs
+consist of parametrized quantum circuit as the generator and classical linear
+program as the discriminator.
 
 %%% Local Variables:
 %%% mode: latex

@@ -7,11 +7,18 @@
 % TODO: change citation style in settings
 \input{settings}
 
+\usepackage{mathtools}
+\usepackage{mathalfa}
+\DeclarePairedDelimiter\bra{\langle}{\rvert}
+\DeclarePairedDelimiter\ket{\lvert}{\rangle}
+\DeclarePairedDelimiterX\braket[2]{\langle}{\rangle}{#1 \delimsize\vert #2}
+\DeclarePairedDelimiterX\set[1]\lbrace\rbrace{\def\given{\;\delimsize\vert\;}#1}
+
 % TODO: change thesis information
 \newcommand*{\getUniversity}{Technische Universität München}
 \newcommand*{\getFaculty}{Department of Informatics}
-\newcommand*{\getTitle}{Quantum Adversarial Learning and Quantum States Generation}
-\newcommand*{\getTitleGer}{Quantum Adversarial Learning and Quantum States Generation}
+\newcommand*{\getTitle}{Quantum and Classical Generative Modeling for Quantum States Preparation}
+\newcommand*{\getTitleGer}{Quantenbasierte und klassische generative Modellierung zur Erzeugung von Quantenzuständen}
 \newcommand*{\getAuthor}{Wiktor Jurasz}
 \newcommand*{\getDoctype}{Master's Thesis in Quantum Computing}
 \newcommand*{\getSupervisor}{Prof. Dr. Christian Mendl}
@@ -61,8 +68,3 @@
 \printbibliography{}
 
 \end{document}
-
-%%% Local Variables:
-%%% mode: latex
-%%% TeX-master: t
-%%% End:

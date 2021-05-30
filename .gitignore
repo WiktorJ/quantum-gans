@@ -286,3 +286,7 @@ TSWLatexianTemp*
 *.xwm
 
 *.tex~
+**/.pdf-view-restore
+**/_region_.*
+**/\#.*
+**/.\#.*

@@ -51,6 +51,8 @@ class Trainer:
         self.base_A = np.array([get_zero_ones_array(len(self.disc_hamiltonians), indices) for indices in
                                 self.qubit_to_string_index.values()])
         self.base_A = np.array([[x for pair in zip(A_i, A_i) for x in pair] for A_i in self.base_A])
+        self.A = np.array([get_zero_ones_array(len(self.disc_hamiltonians), indices) for indices in
+                           self.qubit_to_string_index.values()])
         self.b = np.ones(len(self.qubit_to_string_index))
         self.rank = rank
         initial_prob = 1 / rank
@@ -164,6 +166,7 @@ class Trainer:
         extended_c = np.array([x for pair in zip(c, -c) for x in pair])
         res = linprog(-extended_c, A_ub=self.base_A, b_ub=self.b, bounds=(0, None))
         weights = [res.x[i] - res.x[i + 1] for i in range(0, len(res.x), 2)]
+        # print(f"real exp: {[real_exps[i] for i in range(len(self.disc_hamiltonians)) if abs(weights[i]) > 1.e-5]}")
         return [weights[i] for i in range(len(self.disc_hamiltonians)) if abs(weights[i]) > 1.e-5], \
                [self.disc_hamiltonians[i] for i in range(len(self.disc_hamiltonians)) if abs(weights[i]) > 1.e-5], \
                [c[i] for i in range(len(self.disc_hamiltonians)) if abs(weights[i]) > 1.e-5]
@@ -171,11 +174,21 @@ class Trainer:
     def gen_cost(self, max_w, max_h):
         exps = self.get_all_generator_expectations(max_h)
         cost = tf.reduce_sum([w * exp for w, exp in zip(max_w, exps[0])])
-        # print("H, exp, w")
-        # print(list(zip([str(el) for el in max_h], exps.numpy()[0], max_w)))
+        # print(f"H:{[str(el) for el in max_h],}")
+        # print(f"exp:{exps[0]}")
+        # print(f"w: {max_w}")
         # print(f"cost: {cost}")
         # print()
         return cost
+
+    # def find_max_w_h_pairs(self):
+    #     c = (self.get_all_generator_expectations(self.disc_hamiltonians).numpy() - self.get_real_expectation(
+    #         self.disc_hamiltonians)).flatten()
+    #     res = linprog(-c, A_ub=self.A, b_ub=self.b, bounds=(0, 1))
+    #
+    #     return [res.x[i] for i in range(len(self.disc_hamiltonians)) if res.x[i] > 1.e-2], \
+    #            [self.disc_hamiltonians[i] for i in range(len(self.disc_hamiltonians)) if res.x[i] > 1.e-2], \
+    #            [c[i] for i in range(len(self.disc_hamiltonians)) if res.x[i] > 1.e-2]
 
     def real_distance(self, max_w, max_h):
         exps = self.get_real_expectation(max_h)
