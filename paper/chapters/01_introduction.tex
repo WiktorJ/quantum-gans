@@ -15,10 +15,10 @@ existing methods propose a new one that combines quantum and classical
 generative modeling.
 \section{Previous Work}
 There exist many different types of generative models. In this work we focus on
-one particular type, namely Generative Adversarial Networks (to which we refer
-to as Standard Generative Adversarial Networks - SGANs)
-\cite{goodfellow2014generative}. Many different variations of GANs were proposed
-since their invention
+one particular type, namely Generative Adversarial Networks (GANs). First
+version of GANs was proposed bu Goodfellow et al.
+\cite{goodfellow2014generative} (to which we refer as Standard GANs - SGANs),
+since then many different variations of GANs were invented
 \cite{mirza2014conditional}\cite{karras2019stylebased}\cite{radford2016unsupervised}.
 In context of this work, particularly interesting are Wasserstein GANs
 (WGANs)\cite{arjovsky2017wasserstein} which minimize \textit{Earth-Mover} distance
@@ -38,8 +38,22 @@ as the discriminator.
 De Palma et al. proposed quantum equivalent of Wasserstein distance of order 1
 \cite{depalma2020quantum} which made the Quantum Wasserstein GANs
 (QWGANs) \cite{kiani2021quantum} possible. This variation of quantum GANs
-consist of parametrized quantum circuit as the generator and classical linear
+consist of the parametrized quantum circuit as the generator and the classical linear
 program as the discriminator.
+
+\section{Our Contribution}
+There has been a substantial effort in the direction of bringing GANs into the quantum
+realm. Nevertheless, this is still very early stage and many more routs are yet
+to be explored. In this work we focus on building quantum GANs that can generate
+new, unseen before, quantum states. Majority of models proposed so far are only
+able to generate the states the has been a part of the training data. Only some
+architectures \cite{Dallaire_Demers_2018} account for random noise in the input
+that allows to generate unseen states. However, as we discuss later, those are
+mostly theoretical and do not seem to work well in practice.
+
+We propose a new quantum-classical hybrid approach that allows to generate
+unlimited amount of unseen quantum states. We utilize fully quantum and fully
+classical generative models that work together in one framework.
 
 %%% Local Variables:
 %%% mode: latex
