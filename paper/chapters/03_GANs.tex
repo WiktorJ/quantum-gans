@@ -92,7 +92,7 @@ follows:
 
 \begin{equation}
   \label{eq:EMD}
-  W(p_r, p_q) = \inf_{\gamma \in \Pi(p_r, p_g)} \mathbb{E}_{(x, y) \sim \gamma}[\norm{x-y}]
+  W(p_r, p_g) = \inf_{\gamma \in \Pi(p_r, p_g)} \mathbb{E}_{(x, y) \sim \gamma}[\norm{x-y}]
 \end{equation}
 
 Where $\Pi(p_r, p_g)$ denotes the set of all possible joint distributions,
@@ -105,12 +105,27 @@ Kantorovich-Rubinstein duality \cite{villani@optimal}, we can rewrite it as
 follows.
 
 \begin{equation}
-  \label{eq:EMD}
-  W(p_r, p_q) = \frac{1}{K} \sup_{\norm{f}_L < K} \mathbb{E}_{x \sim p_r}[f(x)] - \mathbb{E}_{x \sim p_g}[f(x)]
+  \label{eq:EMD2}
+  W(p_r, p_g) = \frac{1}{K} \sup_{\norm{f}_L < K} \mathbb{E}_{x \sim p_r}[f(x)] - \mathbb{E}_{x \sim p_g}[f(x)]
 \end{equation}
 
-Where $\norm{f}_L < K$ is a K-Lipschitz function $f$.
+Where the supremum is overall all K-Lipschitz functions $f$. In practice it is
+impossible to go over all such functions. Instead we define a family of parameterized
+functions $\{f_{w}\}_{w \in W}$ and using the same notation for the generator as
+in SGANs the WGANs loss function becomes
 
+
+\begin{equation}
+  \label{eq:EMDL}
+  \mathcal{L}(f, G) = \max_{w}\min_{\theta}  \mathbb{E}_{x \sim p_r}[f_w(x)] - \mathbb{E}_{z \sim p_z}[f_w(G_{\theta}(z))]
+\end{equation}.
+
+Here the function $f_w$ represents the ``discriminator'', however it does not
+anymore tries to distinguish between real and fake samples. Instead it is
+trained to to approximate K-continous Lipschitz function and compute the
+Wasserstein distance. The one missing part from the Equation \ref{eq:EMDL} is
+ensuring the $f_w$ Lipschitz continuity, this can be achieved by gradient
+clipping \cite{arjovsky2017wasserstein} or gradient penalty \cite{gulrajani2017improved}.
 
 
 
