@@ -1,4 +1,19 @@
 \chapter{Quantum Generative Adversarial Networks}\label{chapter:quantum_gans}
+The field of Quantum Machine Learning (QML) is still in very early stages and there
+has been an ongoing effort on translating the  classical Machine Learning (ML)
+concepts into QML realm. Because of the limitations of current quantum computers
+(NISQ) \cite{bharti2021noisy} and overall different paradigm of Quantum
+Computing (QC), this process is difficult and there is no clear
+answer to the question ``how this concept should be realized on QC device?''.
+While in classical GANs generator and discriminator are realized as deep neural
+networks, NISQ devices are not yet powerful enough to support such architecture.
+Instead parametric quantum circuits \cite{Schuld_2020} are used.
+
+In this chapter we take a closer look at two different designs of quantum GANs.
+We briefly explain theory behind them and show the results of our evaluation.
+The quantum GANs introduced in this chapter are the base of our hybrid
+classical-quantum generative framework.
+
 \section{Standard Quantum GANs (SQGANs)}
 Theoretical description and experimental results
 \section{Wasserstein Quantum GANs (WQGANs)}
