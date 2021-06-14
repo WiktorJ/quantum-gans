@@ -17,10 +17,44 @@ classical-quantum generative framework.
 \section{Standard Quantum GANs (SQGANs)}
 In the classical GANs, both the discriminator and generator are deep, general
 purpose neural networks. The logical extension of this design in the quantum
-realm is to model those are general purpose parametric quantum circuits.
+realm is to model those are general purpose parametric quantum circuits. This
+idea was formalized by Dallaire-Demers et al. \cite{Dallaire_Demers_2018} in
+the architecture we call SQGANs (Figure \ref{fig:SQGANs_circuit}). The generator
+starts in the state $\ket{0}^{\otimes n}$, where $n$ is the dimension of real
+quantum samples. Additionally, generator takes label state $\ket{\lambda}$  and random
+state $\ket{z}$ that provides the entropy. The label state $\ket{\lambda}$ lets
+the generator to learn conditional distribution $p_g(x|\lambda)$ instead of $p_g(x)$,
+this design was inspired by classical Conditional GANs
+\cite{mirza2014conditional}. The discriminator takes the generated state $\rho_\lambda^G$ or real
+state $\rho_\lambda^R$ and the corresponding label $\ket{\lambda}$.
+
+
+\begin{figure}[htbp!]
+  \begin{tikzcd}
+    \rstick{Out D} &&&&&& \rstick{$\ket{0}$} &&& \qw & \qw & \gate[4, disable auto height]{$D$} & \meter{} \\
+    \rstick{Batch D} &&&&&& \rstick{$\ket{0}^{\otimes d}$} &&& \qw & \qw & & \qw \\
+    \rstick{Label D} &&&&&& \rstick{$\ket{\lambda}$} &&& \qw & \qw & & \qw \\ 
+    \rstick{Out R/G} &&&&&& \rstick{$\ket{0}^{\otimes n}$} &&& \gate[3, disable auto height]{
+      \begin{array}
+      \text{R} \\ \text{or} \\ \text{G}
+      \end{array}
+    } & \qw \rho_{\lambda}^{R/G} & & \qw \\ 
+    \rstick{Label R/G} &&&&&& \rstick{$\ket{\lambda}$} &&& \qw & \qw & \qw & \qw \\ 
+    \rstick{Batch R/G} &&&&&& \rstick{$\ket{z}$} &&& \qw & \qw & \qw & \qw 
+  \end{tikzcd}
+  \caption{SQGANs schema. The discriminator $D$ and the generator $G$ are
+    parametric quantum circuits. The first 3 wires go
+    directly to the discriminator. \textbf{Out D} outputs the probability of the
+  input being generated. \textbf{Batch D} is an additional workspace of the
+  discriminator and \textbf{Label D} contains the label state. \textbf{Out R/G}
+  carries the generated or real state. \textbf{Label R/G} contains the label
+  state and \textbf{Batch R/G} is the noise source for the generator, not used
+  with the real samples.\label{fig:SQGANs_circuit} }
+\end{figure}
+
 \section{Wasserstein Quantum GANs (WQGANs)}
 Theoretical description and experimental results
-
+  
 %%% Local Variables:
 %%% mode: latex
 %%% TeX-master: "../main"
