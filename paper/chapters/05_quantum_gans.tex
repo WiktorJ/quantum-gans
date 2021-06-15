@@ -20,23 +20,34 @@ purpose neural networks. The logical extension of this design in the quantum
 realm is to model those are general purpose parametric quantum circuits. This
 idea was formalized by Dallaire-Demers et al. \cite{Dallaire_Demers_2018} in
 the architecture we call SQGANs (Figure \ref{fig:SQGANs_circuit}). The generator
-starts in the state $\ket{0}^{\otimes n}$, where $n$ is the dimension of real
-quantum samples. Additionally, generator takes label state $\ket{\lambda}$  and random
-state $\ket{z}$ that provides the entropy. The label state $\ket{\lambda}$ lets
-the generator to learn conditional distribution $p_g(x|\lambda)$ instead of $p_g(x)$,
+starts in the state $\ket{0}^{\otimes n}$ in the \textbf{Our R/G} wire, where
+$n$ is the dimension of the real quantum samples.
+Additionally, the generator takes the label state $\ket{\lambda}$ in the
+\textbf{Label R/G} wire and the random state $\ket{z}$ that provides the entropy in
+the \textbf{Batch R/G} wire. The label state $\ket{\lambda}$ lets the
+generator to learn the conditional distribution $p_g(x|\lambda)$ instead of $p_g(x)$,
 this design was inspired by classical Conditional GANs
-\cite{mirza2014conditional}. The discriminator takes the generated state $\rho_\lambda^G$ or real
-state $\rho_\lambda^R$ and the corresponding label $\ket{\lambda}$.
+\cite{mirza2014conditional}. The discriminator takes the generated state
+$\rho_\lambda^G$ or real state $\rho_\lambda^R$ and the corresponding label
+$\ket{\lambda}$ in the \textbf{Label D} wire, it also uses the workspace
+\textbf{Batch D} initialized in $\ket{0}$ state. The measurement on the single
+qubit wire \textbf{Out D} corresponds to the probability of the state in 
+\textbf{Out R/G} being real or generated.
 
+There are not any particular restrains on how $G$ and $D$ circuits should look
+like. However, to be able to learn and differentiate between arbitrary quantum
+states the ansatz used should be universal (i.e. be able to generate every
+quantum state given appropriate depth). To learn more about ansatz used in this
+work, refer to Appendix \ref{apx:sqgans_ansatz}.
 
 \begin{figure}[htbp!]
   \begin{tikzcd}
-    \rstick{Out D} &&&&&& \rstick{$\ket{0}$} &&& \qw & \qw & \gate[4, disable auto height]{$D$} & \meter{} \\
+    \rstick{Out D} &&&&&& \rstick{$\ket{0}$} &&& \qw & \qw & \gate[4, disable auto height]{D(\theta_D)} & \meter{} \\
     \rstick{Batch D} &&&&&& \rstick{$\ket{0}^{\otimes d}$} &&& \qw & \qw & & \qw \\
     \rstick{Label D} &&&&&& \rstick{$\ket{\lambda}$} &&& \qw & \qw & & \qw \\ 
     \rstick{Out R/G} &&&&&& \rstick{$\ket{0}^{\otimes n}$} &&& \gate[3, disable auto height]{
-      \begin{array}
-      \text{R} \\ \text{or} \\ \text{G}
+      \begin{array}{c}
+      R \\ or \\ G(\theta_G)
       \end{array}
     } & \qw \rho_{\lambda}^{R/G} & & \qw \\ 
     \rstick{Label R/G} &&&&&& \rstick{$\ket{\lambda}$} &&& \qw & \qw & \qw & \qw \\ 
@@ -51,6 +62,12 @@ state $\rho_\lambda^R$ and the corresponding label $\ket{\lambda}$.
   state and \textbf{Batch R/G} is the noise source for the generator, not used
   with the real samples.\label{fig:SQGANs_circuit} }
 \end{figure}
+
+\subsection{Cost Function}
+\subsection{Training}
+\subsection{Evaluation Results}
+\subsection{Conclusions}
+
 
 \section{Wasserstein Quantum GANs (WQGANs)}
 Theoretical description and experimental results
