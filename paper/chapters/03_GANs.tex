@@ -49,11 +49,12 @@ approach $0$. In other terms it simultaneously maximizes $\mathbb{E}_{x \sim
 Generator $G$ has an opposite objective, thus it minimizes the $\mathbb{E}_{z
   \sim p_z(z)}[\log{1 - D(G(z))}]$.
 
-Putting it all together, we get the loss function for SGANs.
+Putting it all together, we get the objective for SGANs \ref{eq:SGANs_objective}.
 \begin{equation}
+  \label{eq:SGANs_objective}
   \begin{split}
-  \min_G\max_D\mathcal{L(G, D)} & = \mathbb{E}_{x \sim p_r(x)}[\log{D(x)}] +  \mathbb{E}_{z \sim p_z(z)}[\log{1 - D(G(z))}] \\
-  & = \mathbb{E}_{x \sim p_r(x)}[\log{D(x)}] +  \mathbb{E}_{x \sim p_g(x)}[\log{1 - D(x)}]
+    \min_G\max_D\mathcal{L(G, D)} & = \min_G\max_D \mathbb{E}_{x \sim p_r(x)}[\log{D(x)}] +  \mathbb{E}_{z \sim p_z(z)}[\log{1 - D(G(z))}] \\
+    & = \min_G\max_D \mathbb{E}_{x \sim p_r(x)}[\log{D(x)}] +  \mathbb{E}_{x \sim p_g(x)}[\log{1 - D(x)}]
   \end{split}
 \end{equation}
 It can be shown, that if $D$ is optimal, this loss function measures the similarity between 
@@ -112,12 +113,12 @@ follows.
 Where the supremum is overall all K-Lipschitz functions $f$. In practice it is
 impossible to go over all such functions. Instead we define a family of parameterized
 functions $\{f_{w}\}_{w \in W}$ and using the same notation for the generator as
-in SGANs the WGANs loss function becomes
+in SGANs the WGANs objective becomes
 
 
 \begin{equation}
   \label{eq:EMDL}
-  \mathcal{L}(f, G) = \max_{w}\min_{\theta}  \mathbb{E}_{x \sim p_r}[f_w(x)] - \mathbb{E}_{z \sim p_z}[f_w(G_{\theta}(z))]
+  \max_{f}\min_{G}\mathcal{L}(f, G) = \max_{f}\min_{G}  \mathbb{E}_{x \sim p_r}[f_w(x)] - \mathbb{E}_{z \sim p_z}[f_w(G_{\theta}(z))]
 \end{equation}.
 
 Here the function $f_w$ represents the ``discriminator'', however it does not
