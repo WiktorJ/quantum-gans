@@ -150,11 +150,45 @@ learning rate is calculated as
 lr = \max{(\exp{(-\frac{(k+200) * \ln{100}}{4000}), 0.01)}
 \end{equation}
 where $k$ is the optimization step number. The
-learning rate to decrease from $\sim 0.8$ to $0.01$ in the first $3800$ steps and then
+learning rate decreases from $\sim 0.8$ to $0.01$ in the first $3800$ steps and then
 remains at $0.01$ for the rest of the training. The exact values were derived
 experimentally and show overall good convergence. The exact number of epochs and
 iterations is specified for each experiment separately.
 \subsubsection{Results For Pure State Real Input}
+In this setup the generator is fed the same real input state at every iteration.
+The real input state is generated using circuit from Figure
+\ref{fig:phase_circuit_small} for random $g \in [-1; 1]$.
+
+
+In Figures from \ref{fig:sqgans_res_3} to \ref{fig:sqgans_res_3} we present the
+results of experiments for different sizes of the real input circuit. For All
+the experiments, the generator and discriminator were built using ansatz
+from Appendix \ref{apx:sqgans_ansatz} for each layer. The \textbf{Label} and
+\textbf{Batch} wires are not used for any circuit.
+
+For each real input width the
+generator was able to approximate the real source very well obtaining fidelity
+close to $1$. 
+
+\begin{figure}[htbp!]
+  \centering
+  \subfloat[Fidelity between real and \\generated state]{
+    \includegraphics[width=0.3\linewidth]{figures/sqgans_size=3/fidelity.png}
+  }
+  \subfloat[Probability of classifying \\generated state as real]{
+    \includegraphics[width=0.3\linewidth]{figures/sqgans_size=3/probability_generated_as_real.png}
+  }
+  \subfloat[Probability of classifying real state as real]{
+    \includegraphics[width=0.3\linewidth]{figures/sqgans_size=3/probability_real_as_real.png}
+  }
+  \caption{The solid line represents the average value and the shaded area
+    represents the range from 5 different experiments. The generator has 3
+    layers and the discriminator has 4. The training runs for 81
+  epochs, in each epoch generator is optimized for 11 iterations and
+  discriminator for 111. In total the whole training process has 9801
+  optimization steps. }
+  \label{fig:sqgans_res_3}
+\end{figure}
 \subsubsection{Results For Mixed State Real Input}
 \subsection{Conclusions}
 
