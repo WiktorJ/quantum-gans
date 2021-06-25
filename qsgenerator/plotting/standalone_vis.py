@@ -11,12 +11,21 @@ sns.set()
 
 FIG_PATH_PREFIX = "/Users/wiktorjurasz/Studies/thesis/paper/figures"
 
-id_prefix = "THES-"
+id_prefix_sqgans = "THES-"
 
-size_3_ids = [f"{id_prefix}{el}" for el in [64, 72, 73, 74, 75]]
+
+def get_ids(pure_ids, prefix):
+    return [f"{prefix}{el}" for el in pure_ids]
+
+
+size_3_ids = get_ids([64, 72, 73, 74, 75], id_prefix_sqgans)
+size_4_ids = get_ids([66, 67, 69, 78, 79], id_prefix_sqgans)
+size_5_ids = get_ids([42, 44, 46, 84], id_prefix_sqgans)
 
 metadata = [
-    {'ids': size_3_ids, 'dir': 'sqgans_size=3', 'width': 3}
+    {'ids': size_3_ids, 'dir': 'sqgans_size=3', 'width': 3},
+    {'ids': size_4_ids, 'dir': 'sqgans_size=4', 'width': 4},
+    {'ids': size_5_ids, 'dir': 'sqgans_size=5', 'width': 5}
 ]
 
 colors = sns.color_palette("husl", 3)
@@ -59,7 +68,7 @@ def plot_metric(metric, data_name, color, width):
     ax.set_xlabel("epoch", fontsize=18)
     ax.set_ylabel(data_name, fontsize=18)
     ax.set_ylim(0, 1)
-    fig.suptitle(f"real input width = {width}")
+    fig.suptitle(f"real input qubits = {width}")
     plt.show()
     return fig
 

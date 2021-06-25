@@ -160,36 +160,85 @@ The real input state is generated using circuit from Figure
 \ref{fig:phase_circuit_small} for random $g \in [-1; 1]$.
 
 
-In Figures from \ref{fig:sqgans_res_3} to \ref{fig:sqgans_res_3} we present the
-results of experiments for different sizes of the real input circuit. For All
+In Figure \ref{fig:sqgans_res_3} we present the
+results of experiments for different widths of the real input circuit. For All
 the experiments, the generator and discriminator were built using ansatz
 from Appendix \ref{apx:sqgans_ansatz} for each layer. The \textbf{Label} and
 \textbf{Batch} wires are not used for any circuit.
 
-For each real input width the
-generator was able to approximate the real source very well obtaining fidelity
-close to $1$. 
+For each real input width the generator was able to approximate the real source,
+increasing the fidelity as the training progressed. The training was
+harder for the bigger real source circuits and it can be clearly seen that
+the results for wider inputs are worse. Not only the final fidelity is lower, but
+also it fluctuates much more. It is also much harder for the generator to fool
+the discriminator for wider inputs.
+
+It is not surprising that it is more difficult to train circuits with more
+qubits. We also acknowledge that with different metaparameters or optimization
+method the results could be better. However, our best results for more than 5 qubits
+in the real source are not longer useful for the real source approximation.
 
 \begin{figure}[htbp!]
+  \captionsetup[subfigure]{labelformat=empty}
   \centering
-  \subfloat[Fidelity between real and \\generated state]{
+  \subfloat{
     \includegraphics[width=0.3\linewidth]{figures/sqgans_size=3/fidelity.png}
   }
-  \subfloat[Probability of classifying \\generated state as real]{
+  \subfloat{
     \includegraphics[width=0.3\linewidth]{figures/sqgans_size=3/probability_generated_as_real.png}
   }
-  \subfloat[Probability of classifying real state as real]{
+  \subfloat{
     \includegraphics[width=0.3\linewidth]{figures/sqgans_size=3/probability_real_as_real.png}
   }
+
+
+  \subfloat{
+    \includegraphics[width=0.3\linewidth]{figures/sqgans_size=4/fidelity.png}
+  }
+  \subfloat{
+    \includegraphics[width=0.3\linewidth]{figures/sqgans_size=4/probability_generated_as_real.png}
+  }
+  \subfloat{
+    \includegraphics[width=0.3\linewidth]{figures/sqgans_size=4/probability_real_as_real.png}
+  }
+
+  \subfloat[Fidelity between real and \\generated state]{
+    \includegraphics[width=0.3\linewidth]{figures/sqgans_size=5/fidelity.png}
+  }
+  \subfloat[Probability of classifying \\generated state as real]{
+    \includegraphics[width=0.3\linewidth]{figures/sqgans_size=5/probability_generated_as_real.png}
+  }
+  \subfloat[Probability of classifying real state as real]{
+    \includegraphics[width=0.3\linewidth]{figures/sqgans_size=5/probability_real_as_real.png}
+  }
   \caption{The solid line represents the average value and the shaded area
-    represents the range from 5 different experiments. The generator has 3
-    layers and the discriminator has 4. The training runs for 81
-  epochs, in each epoch generator is optimized for 11 iterations and
-  discriminator for 111. In total the whole training process has 9801
-  optimization steps. }
+    represents the range from 5 different experiments. The generator has the
+    number of layers equal to the width of real input the discriminator has one
+    more layer than the generator. In each epoch generator is optimized for 11 iterations and
+  discriminator for 111. }
   \label{fig:sqgans_res_3}
 \end{figure}
 \subsubsection{Results For Mixed State Real Input}
+If the real input source can provide more than one state, we can say that the
+generator is learning mixed state of all the input states. Dallaire-Demers et
+al. \cite{Dallaire_Demers_2018} trained a simple 2 qubits circuit with two real
+input states $\ket{0}$ or $\ket{1}$. In this setup \textbf{Label} wires consist
+of one qubit and also takes values $\ket{0}$ or $\ket{1}$, effectively learning
+$CNOT$ gate. This strategy do not have generalize well in to more complex cases.
+First, if there is more than one non-$\ket{0}$ input state, there would have to
+be a separate $CNOT$ gate for each state. Second, the number of qubits necessary
+for the \textbf{Label} wires grows logarithmically with the number of real input
+states. Both of those cause the circuit to grow in width and depth.
+
+Another approach we explored was to insert $R_x(\lambda_k)$ parametrized
+rotation gates between each layer of the generator and discriminator. The
+generator is essentially learning how to rotate input state $\ket{0}$ to some
+desired real input state $\ket{r_k}$. Then, if for each $k$ the rotation is
+pushed in different direction, the final generator might give different output
+state for each $\lambda_k$. However, in our experiments the generator was always
+learning to ignore the $R_x(\lambda_k)$ and in the end was only able to produce
+one, slightly distorted, state independent of $\lambda_k$.
+
 \subsection{Conclusions}
 
 
