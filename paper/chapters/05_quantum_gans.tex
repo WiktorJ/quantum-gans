@@ -240,11 +240,26 @@ learning to ignore the $R_x(\lambda_k)$ and in the end was only able to produce
 one, slightly distorted, state independent of $\lambda_k$.
 
 \subsection{Conclusions}
+We have experimentally evaluated SQGANs and confirmed their ability to learn
+pure quantum state. However, the problems with labeled states and small
+circuit width for which the training succeeds prevented us from succeeding in
+mixed state learning.
+
+The very important aspect of generative models is ability to generate new,
+unseen before, samples. In SQGANs this is theoretically possible by using the
+textbf{Batch} register. However, it is not straight forward to use this register
+in the intended way. First, the task of generating random quantum state is not
+trivial on its own. Second, all the problems associated with the label state
+$\lambda$ also apply to the random state $z$. 
+
+Because of the above, we decided not to pursue the exploration of SQGANs further
+and turned into other methods.
 
 
 \section{Wasserstein Quantum GANs (WQGANs)}
-Theoretical description and experimental results
   
+
+
 %%% Local Variables:
 %%% mode: latex
 %%% TeX-master: "../main"
