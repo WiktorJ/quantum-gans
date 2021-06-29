@@ -20,7 +20,7 @@ def get_ids(pure_ids, prefix):
 
 size_3_ids = get_ids([64, 72, 73, 74, 75], id_prefix_sqgans)
 size_4_ids = get_ids([66, 67, 69, 78, 79], id_prefix_sqgans)
-size_5_ids = get_ids([42, 44, 46, 84], id_prefix_sqgans)
+size_5_ids = get_ids([42, 44, 46, 84, 85], id_prefix_sqgans)
 
 metadata = [
     {'ids': size_3_ids, 'dir': 'sqgans_size=3', 'width': 3},

@@ -258,6 +258,30 @@ and turned into other methods.
 
 \section{Wasserstein Quantum GANs (WQGANs)}
   
+As in the classical case, the WQGANs relay on calculating the Wasserstein
+distance between real and generated state. However, the definition of the
+Wasserstein distance cannot be trivially translated into the quantum setup.
+There has been multiple approaches to defining the quantum Wasserstein distance
+\cite{carlen2012analog,chen2016matrix,chen2018Wasserstein,ning2013matrixvalued,peyré2017quantum,golse2021quantum,Golse_2016,yu2019quantum},
+however the first take on the Wasserstein distance in the context of quantum
+GANs was proposed by Chakrabarti et. al\cite{chakrabarti2019quantum}. They
+proposed the Wasserstein semi-metric and successfully used it to train the
+quantum GANs. The shortcoming of this semi-metric is that, it does not preserve the
+triangle inequality.
+
+In this work, we use the definition by De Palma et.
+al\cite{depalma2020quantum}. They proposed a generalization of
+Wasserstein distance of order 1 to the quantum realm. The dual formulation of
+this distance is stated as follows:
+\begin{equation}
+  W(\rho, \sigma) = \max_{H \in \mathcal{O}_n}{(Tr[(\rho - \sigma)H]: \norm{H}_L \leq 1
+    )}
+\end{equation}
+Where $\mathcal{O}_n$ is a set of all $2^n \times 2^n$ Hermitian matrices.
+$\norm{H}_L$ is a quantum Lipschitz constant of the matrix $H$:
+\begin{equation}
+  \norm{H}_L = 2 \max_{i=1\ldots n}{\min_{H_{\bar{i} \in \mathcal{O}_n}}{(\norm{H - H_{\bar{i}}}_\infty)}}
+\end{equation}
 
 
 %%% Local Variables:
