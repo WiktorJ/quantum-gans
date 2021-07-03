@@ -147,7 +147,7 @@ In all the experiment we use Adam optimizer \cite{kingma2017adam} with
 parameters $\beta_1 = 0.9$, $\beta_2=0.98$, $\hat{\epsilon} = 1e-9$. The
 learning rate is calculated as
 \begin{equation}
-lr = \max{(\exp{(-\frac{(k+200) * \ln{100}}{4000}), 0.01)}
+lr = \max{(\exp{(-\frac{(k+200) * \ln{100}}{4000}), 0.01)}}
 \end{equation}
 where $k$ is the optimization step number. The
 learning rate decreases from $\sim 0.8$ to $0.01$ in the first $3800$ steps and then
@@ -257,7 +257,7 @@ and turned into other methods.
 
 
 \section{Wasserstein Quantum GANs (WQGANs)}
-  
+
 As in the classical case, the WQGANs relay on calculating the Wasserstein
 distance between real and generated state. However, the definition of the
 Wasserstein distance cannot be trivially translated into the quantum setup.
@@ -269,19 +269,70 @@ proposed the Wasserstein semi-metric and successfully used it to train the
 quantum GANs. The shortcoming of this semi-metric is that, it does not preserve the
 triangle inequality.
 
+
+\subsection{Quantum Wasserstein Distance}
 In this work, we use the definition by De Palma et.
 al\cite{depalma2020quantum}. They proposed a generalization of
-Wasserstein distance of order 1 to the quantum realm. The dual formulation of
+Wasserstein distance of order 1 into the quantum realm. The dual formulation of
 this distance is stated as follows:
 \begin{equation}
-  W(\rho, \sigma) = \max_{H \in \mathcal{O}_n}{(Tr[(\rho - \sigma)H]: \norm{H}_L \leq 1
-    )}
+  W_1(\rho, \sigma) = \max_{H \in \mathcal{O}_n}{(Tr[(\rho - \sigma)H]: \norm{H}_L \leq 1
+    )}.
 \end{equation}
-Where $\mathcal{O}_n$ is a set of all $2^n \times 2^n$ Hermitian matrices.
-$\norm{H}_L$ is a quantum Lipschitz constant of the matrix $H$:
+Where $\mathcal{O}_n$ is a set of all $2^n \times 2^n$ Hermitian matrices and 
+$\norm{H}_L$ is the quantum Lipschitz constant of the matrix $H$ defined as:
 \begin{equation}
-  \norm{H}_L = 2 \max_{i=1\ldots n}{\min_{H_{\bar{i} \in \mathcal{O}_n}}{(\norm{H - H_{\bar{i}}}_\infty)}}
+  \norm{H}_L = 2 \max_{i=1\ldots n}{\min_{H_{\bar{i} \in \mathcal{O}_n}}{(\norm{H - H_{\bar{i}}}_\infty)}}.
 \end{equation}
+Where $H_{\bar{i}}$ is a Hermitian matrix that does not act on the $i$-th qubit.
+The quantum Lipschitz constant and the Wasserstein distance defined in this way,
+recover their classical counterparts for operators diagonal in the canonical basis.
+
+\begin{definition}[Neighboring States]
+  Two quantum states $\rho$ and $\sigma$ are Neighbouring States if they
+  coincide after discarding one qubit, i.e. $\exists i: Tr_i[\rho]=Tr_i[\sigma]$
+\end{definition}
+
+Informally, the $W_1$ distance is the maximum distance that is induced by a norm
+that assigns the distance at most one to any couple of Neighbouring States. 
+
+The quantum Wasserstein distance has several properties that make it
+particularly useful in the context of training the generative models.
+\begin{enumerate}
+\item It is invariant with respect to qubit permutations and super additive with
+  respect to tensor product, (i.e. $W_1(\rho, \sigma) \geq W_1(\rho_{1 \ldots m},
+  \sigma_{1 \ldots m}) + W_1(\rho_{1+m \ldots n},
+  \sigma_{1+m \ldots n})$). 
+
+  This property implies, that an operation that reduces distance between some
+  marginal states also reduces the distance between the full states. For example,
+  $W_1(\ket{100}, \ket{111}) > W_1(\ket{110}, \ket{111})$, this is not the case
+  however for the trace distance or fidelity, as they do not differentiate
+  between orthogonal. 
+\item The quantum Wasserstein distance is bound by the trace distance, i.e.
+  $T(\rho, \sigma) \leq W_1(\rho, \sigma) \leq nT(\rho, \sigma)$, where $n$ is
+  the number of qubits. This ensures that minimizing the $W_1$ distance also
+  minimizes the trace distance.
+\item Because the quantum Wasserstein distance recovers classical Wasserstein
+  distance for diagonal operators, we can expect that generative models build
+  using this metrics preserve the advantages of their classical counterparts.
+\end{enumerate}
+
+\subsection{WQGANs Architecture}
+In contract to SQGANs, the architecture of generator and discriminator for WQGANs
+differs significantly. As shown by Kiani et. al \cite{kiani2021quantum} the
+discriminator can take a form on simple linear program, while the generator is
+similar to the one for SQGANs.
+
+\subsubsection{Discriminator}
+\subsubsection{Generator}
+
+\subsection{Training}
+\subsection{Evaluation Results}
+\subsubsection{Experimental Setup}
+\subsubsection{Results For Pure Real State}
+\subsubsection{Results For Mixed Real State}
+\subsubsection{Conclusions}
 
 
 %%% Local Variables:
