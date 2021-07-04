@@ -278,6 +278,7 @@ this distance is stated as follows:
 \begin{equation}
   W_1(\rho, \sigma) = \max_{H \in \mathcal{O}_n}{(Tr[(\rho - \sigma)H]: \norm{H}_L \leq 1
     )}.
+  \label{eq:w1_distance_general}
 \end{equation}
 Where $\mathcal{O}_n$ is a set of all $2^n \times 2^n$ Hermitian matrices and 
 $\norm{H}_L$ is the quantum Lipschitz constant of the matrix $H$ defined as:
@@ -307,8 +308,8 @@ particularly useful in the context of training the generative models.
   This property implies, that an operation that reduces distance between some
   marginal states also reduces the distance between the full states. For example,
   $W_1(\ket{100}, \ket{111}) > W_1(\ket{110}, \ket{111})$, this is not the case
-  however for the trace distance or fidelity, as they do not differentiate
-  between orthogonal. 
+  however for the trace distance or fidelity, as they are always $0$
+  between orthogonal states. 
 \item The quantum Wasserstein distance is bound by the trace distance, i.e.
   $T(\rho, \sigma) \leq W_1(\rho, \sigma) \leq nT(\rho, \sigma)$, where $n$ is
   the number of qubits. This ensures that minimizing the $W_1$ distance also
@@ -319,14 +320,116 @@ particularly useful in the context of training the generative models.
 \end{enumerate}
 
 \subsection{WQGANs Architecture}
-In contract to SQGANs, the architecture of generator and discriminator for WQGANs
-differs significantly. As shown by Kiani et. al \cite{kiani2021quantum} the
-discriminator can take a form on simple linear program, while the generator is
-similar to the one for SQGANs.
+In contract to SQGANs, the design of generator and discriminator for WQGANs
+differs significantly. Here we use the architecture proposed by Kiani et. al
+\cite{kiani2021quantum}. The discriminator takes a form of simple linear
+program, while the generator is similar to the one for SQGANs.
 
 \subsubsection{Discriminator}
-\subsubsection{Generator}
+The set $\mathcal{O}_n$ in Equation \ref{eq:w1_distance_general} is too big to
+be useful in any practical scenarios. Instead the set of parametrized k-length
+Pauli String is used. Specifically,
+\begin{equation}
+\begin{split}
+  \label{eq:parametrized_hamiltonian}
+  H(W) = & \sum_{i_1 = 1}^{n-k+1} \ldots \sum_{i_k = i_{k-1} + 1}^{n}\sum_{\sigma_1, \ldots, \sigma_k \in \{I, X, Y, Z\}} w^{\sigma_1,
+    \ldots, \sigma_k}_{(i_1, \ldots, i_k)} \sigma^1_{i_1} \otimes \ldots \otimes \sigma^k_{i_k}  = \\
+  & = \sum_{\mathcal{I}_k \subseteq \{1, \ldots, n \}} \sum_{H \in \{ I,X,Y,Z \}^{\otimes k}} w_{\mathcal{I}_k}^HH_{\mathcal{I}_k}
+\end{split}
+\end{equation}
+Where $\mathcal{I}_k$ is a k-set of qubit indexes used to generate the k-lenght
+Pauli String, $H_{\mathcal{I}_k}$ is n-length Pauli String that acts non
+trivially on the set of at the most k qubits
+corresponding to $\mathcal{I}_k$ and $W$ is the set of all weights.
 
+We can also use the fact that the quantum Lipschitz constant of $H(W)$ is
+bounded by:
+\begin{equation}
+  \label{eq:quantum_lipschitz_bound}
+  \norm{H(W)}_L \leq 2 \max_{i = 1,\ldots,n}{\norm{\sum_{\{ \mathcal{I}_k: \mathcal{I}_k \subseteq \{1, \ldots, n \} \land i \in \mathcal{I}_k \}}
+      \sum_{\substack{H \in \{ I,X,Y,Z \}^{\otimes k} \\
+        H_{(i)} \neq I
+      }} w_{\mathcal{I}_k}^HH_{\mathcal{I}_k} }_{\infty}}.
+\end{equation}
+Where the sum is taken only over the operators which act non-trivially on qubit
+$i$\cite{kiani2021quantum}. 
+
+To simplify the notation, the parameter set $W$ is enumerated as $W=\{w_1,
+  \ldots, w_N\}$, where $N=|W|$ and $H_i$, $\mathcal{I}_{k_i}$ are Hamiltonian and index set
+associated with the weight $w_i$.
+
+Now, the equation \ref{eq:w1_distance_general} takes the form: 
+\begin{equation}
+  \label{eq:quantum_wasserstein_parametrized}
+  W_1(\rho, \sigma) = \max_{w}{(Tr[(\rho - \sigma)\sum_{i=1}^N w_iH_i])}
+\end{equation}
+with the following constraint steaming from the quantum Lipschitz constant bound
+from Equation \ref{eq:quantum_lipschitz_bound}.
+\begin{equation}
+\sum_{\{i: i \in \{1,\ldots, n\} \land j \in \mathcal{I}_{k_i} \}} |w_i| \leq 1, \qquad j=1,\ldots,n
+\end{equation}
+This optimization problem can be translated into the canonical form of linear
+programming. First, let
+\begin{equation}
+  c_i=Tr[(\rho - \sigma)H_i],
+\end{equation}  
+  then Equation\ref{eq:quantum_wasserstein_parametrized} becomes
+\begin{equation}
+  W_1(\rho, \sigma) = \max_{w}{\sum_{i=1}^N w_ic_i}.
+\end{equation}  
+Then, with
+\begin{equation}
+    w_i = w_i^+ - w_i^-
+\end{equation}
+and the absolute value constraint is equivalent to the following set of
+constraints: 
+\begin{equation}
+\begin{split}
+  w_i^+ &\ge 0 \\
+  w_i^- &\ge 0 \\
+  \sum_{\{i: i \in \{1,\ldots, n\} \land j \in \mathcal{I}_{k_i} \}} (w_i^+ + w_i^-) &\leq 1, \qquad j=1,\ldots,n
+\end{split}
+\end{equation}
+Now, with two vectors defined as:
+\begin{equation}
+\begin{split}
+\bm{w'} &= [w_1^+, w_1^-, \ldots, w_N^+, w_N^-] \\
+\bm{c'} &= [c_1, -c_1, \ldots, c_N, -c_N],
+\end{split}
+\end{equation}
+matrix $A^{n \times N}$ defined as:
+\[A_{j, i}  = \begin{cases} 
+    1 & \text{if} \quad j \in \mathcal{I}_{k_i} \\
+    0 & \text{else}
+  \end{cases}
+\]
+The discriminator linear program canonical form looks as follows:
+\begin{equation}
+\begin{split}
+  \max_{\bm{w'}}{} \quad & \bm{c'}^T \bm{w'}\\
+  \text{subject to } \quad & \bm{w'} \geq \bm{0} \\
+  & A\bm{w'} \leq \bm{1}.
+\end{split}
+\end{equation}
+
+The weights from the original set $W$ are recovered as:
+\begin{equation}
+  w_i = w_{2i-1}' - w_{2i}'.
+\end{equation}
+
+
+The linear program with $n$ constraints outputs at most $n$ non-zero
+weights\cite{10.5555/548834}, so the optimal Hamiltonian which approximates the
+quantum Wasserstein distance the best is given by:
+\begin{equation}
+\hat{H} = \sum_{i=1}^{\hat{N}}\hat{w}_i\hat{H}_i,
+\end{equation}
+Where $\hat{N} \leq n$.
+
+The Hamiltonian obtained in this way acts as the ``discriminator'' and it used
+to train the generator in the typical minmax game of GANs.
+
+\subsubsection{Generator}
 \subsection{Training}
 \subsection{Evaluation Results}
 \subsubsection{Experimental Setup}
