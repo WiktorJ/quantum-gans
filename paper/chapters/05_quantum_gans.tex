@@ -366,6 +366,7 @@ Now, the equation \ref{eq:w1_distance_general} takes the form:
 with the following constraint steaming from the quantum Lipschitz constant bound
 from Equation \ref{eq:quantum_lipschitz_bound}.
 \begin{equation}
+  \label{eq:absolute_value_constraint}
 \sum_{\{i: i \in \{1,\ldots, n\} \land j \in \mathcal{I}_{k_i} \}} |w_i| \leq 1, \qquad j=1,\ldots,n
 \end{equation}
 This optimization problem can be translated into the canonical form of linear
@@ -373,7 +374,7 @@ programming. First, let
 \begin{equation}
   c_i=Tr[(\rho - \sigma)H_i],
 \end{equation}  
-  then Equation\ref{eq:quantum_wasserstein_parametrized} becomes
+  then Equation \ref{eq:quantum_wasserstein_parametrized} becomes
 \begin{equation}
   W_1(\rho, \sigma) = \max_{w}{\sum_{i=1}^N w_ic_i}.
 \end{equation}  
@@ -381,7 +382,7 @@ Then, with
 \begin{equation}
     w_i = w_i^+ - w_i^-
 \end{equation}
-and the absolute value constraint is equivalent to the following set of
+the absolute value constraint from Equation \ref{eq:absolute_value_constraint} is equivalent to the following set of
 constraints: 
 \begin{equation}
 \begin{split}
@@ -403,7 +404,7 @@ matrix $A^{n \times N}$ defined as:
     0 & \text{else}
   \end{cases}
 \]
-The discriminator linear program canonical form looks as follows:
+The discriminator linear program in the canonical form looks as follows:
 \begin{equation}
 \begin{split}
   \max_{\bm{w'}}{} \quad & \bm{c'}^T \bm{w'}\\
@@ -430,6 +431,35 @@ The Hamiltonian obtained in this way acts as the ``discriminator'' and it used
 to train the generator in the typical minmax game of GANs.
 
 \subsubsection{Generator}
+Similarly to SQGANs, the generator is built using parametrized quantum circuits.
+Specifically, the generator is defined as a sum of parametrized quantum circuits
+with corresponding probabilities:
+\begin{equation}
+G(\theta) = \sum_{i=1}^r p_iG_i(\theta_i)\rho_0G_i(\theta_i)^\dagger.
+\end{equation}
+Where $\sum_{i=1}^r p_i = 1$ and $p_i$ is the probability associated with the
+circuit $G_i$ and $\rho_0$ is an initial state of the circuit. The summation is
+essentially the maximal rank of the output state that the generator is able to
+generate. Namely, the generator constructed like that is able to learn a mix of
+at most $r$ pure states.
+
+In all of our experiments we use the same design for each circuit within the
+generator, i.e. $G_i = \bar{G} \quad \forall i \in 1,\ldots, r$, and only the
+parameters $\theta_i$ differ. We use different designs for $\bar{G}$ for
+different experiments, however they always fall into two categories.
+\begin{enumerate}
+\item Generic $\bar{G}$ described in Appendix \ref{apx:sqgans_ansatz} (the same as for SQGANs).
+\item $\bar{G}$ the same as the circuit used to generate the real input state.
+\end{enumerate}
+We also always set the initial state $\rho_0 = \ket{0}$.
+
+In the end the generator becomes:
+\begin{equation}
+  G(\theta) = \sum_{i=1}^r p_i\bar{G}(\theta_i)\ket{0}\bar{G}(\theta_i)^\dagger.
+\end{equation}
+
+
+
 \subsection{Training}
 \subsection{Evaluation Results}
 \subsubsection{Experimental Setup}
