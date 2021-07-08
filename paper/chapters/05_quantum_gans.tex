@@ -438,7 +438,7 @@ with corresponding probabilities:
 G(\theta) = \sum_{i=1}^r p_iG_i(\theta_i)\rho_0G_i(\theta_i)^\dagger.
 \end{equation}
 Where $\sum_{i=1}^r p_i = 1$ and $p_i$ is the probability associated with the
-circuit $G_i$ and $\rho_0$ is an initial state of the circuit. The summation is
+circuit $G_i$ and $\rho_0$ is the initial state of the circuit. The summation is
 essentially the maximal rank of the output state that the generator is able to
 generate. Namely, the generator constructed like that is able to learn a mix of
 at most $r$ pure states.
@@ -461,8 +461,65 @@ In the end the generator becomes:
 
 
 \subsection{Training}
+Similarly to WGANs the discriminator part of the WQGANs computes the best
+approximation of the quantum Wasserstein distance and the generator tries to
+minimize it. This can be again encoded as the minmax game.
+
+Given real input state $\rho_r$, generated state $G(\theta)$ and using trace
+properties from Equation \ref{eq:quantum_wasserstein_parametrized} we get:
+
+\begin{equation}
+  \label{eq:quantum_wasserstein_separated_trace}
+  \begin{split}
+    W_1(\rho_r, G(\theta)) = \max_{w}{(Tr[(\rho_r - G(\theta))\sum_{i=1}^N w_iH_i])} = \max_{w}{(\sum_{i=1}^Nw_i(Tr[\rho_rH_i] - Tr[G(\theta)H_i]))}.
+  \end{split}
+\end{equation}
+The generator tries to minimize the quantum Wasserstein distance to the real
+input state, so in general terms WQGANs optimization objective is stated as:
+\begin{equation}
+  \max_{w}{\min_{\theta}{\mathcal{L}(w, \theta)}} = \max_{w}{\min_{\theta}{(\sum_{i=1}^Nw_i(Tr[\rho_rH_i] - Tr[G(\theta)H_i]))}} 
+\end{equation}
+In practice however, we do not have to calculate the expectation $Tr[G(\theta)H_i]$ for
+every $i$ when training the Generator, instead we can use the $\hat{H}$ defined
+earlier. Also, the real input state expectations $Tr[\rho_rH_i]$ can be
+precomputed and only accessed during the training.
+
+The overall training procedure consists of the following steps:
+\begin{enumerate}
+\item Compute the expectations $Tr[G(\theta)H_i]$ and use them together with
+  the precomputed expectation for the real input state to calculate $Tr[\rho_rH_i] -
+  Tr[G(\theta)H_i]$ for each $i$.
+\item Find $\hat{H}$ using the linear programming formulation.
+\item Use $\hat{H}$ to find gradients of $Tr[G(\theta)\hat{H}]$ w.r.t parameters
+  $\theta_i$ and $p_i$ and update them.
+\end{enumerate}
+
+Those 3 steps are repeated until some stopping condition is satisfied, in our
+case we run the training for given number of steps.
+
 \subsection{Evaluation Results}
 \subsubsection{Experimental Setup}
+We use two different circuits to generate real input samples. First one is the
+same as used in the SQGANs and is described in Appendix
+\ref{apx:topological_phase_transition_ansatz}.
+The second one is a butterfly circuit (also used by Kiani et.
+al\cite{kiani2021quantum}) which is described in Appendix
+\ref{apx:butterfly_ansatz}. For the butterfly circuit we use random
+initialization for all the gates.
+
+We try two different approaches to the generator design. We use the generic
+generator described in Appendix \ref{apx:sqgans_ansatz} and generator
+design matching the circuit used to generate real input data. We specify the
+details of generator architecture for each experiment separately.
+
+In all the experiment we use Adam optimizer \cite{kingma2017adam} with
+parameters $\beta_1 = 0.9$, $\beta_2=0.98$, $\hat{\epsilon} = 1e-9$ and the
+learning rate of $0.01$.
+
+The generator and discriminator are trained interchangeably one iteration each
+and the exact number of epoch is specified for each experiment separately.
+
+
 \subsubsection{Results For Pure Real State}
 \subsubsection{Results For Mixed Real State}
 \subsubsection{Conclusions}
