@@ -34,6 +34,7 @@ class Trainer:
                  ls: Tuple[sympy.Symbol] = None,
                  label_value_provider: Callable = None,
                  rank: int = 1,
+                 k: int = 2,
                  use_analytical_expectation: bool = True,
                  gradient_method_provider: Callable = None,
                  sampling_repetitions: int = 500,
@@ -47,7 +48,7 @@ class Trainer:
         self.gen = gen
         self.real_expectations_provider = real_expectations_provider
 
-        self.disc_hamiltonians, self.qubit_to_string_index = self.real_expectations_provider.get_pauli_strings_and_indexes()
+        self.disc_hamiltonians, self.qubit_to_string_index = get_discriminator(real, k)
         self.base_A = np.array([get_zero_ones_array(len(self.disc_hamiltonians), indices) for indices in
                                 self.qubit_to_string_index.values()])
         self.base_A = np.array([[x for pair in zip(A_i, A_i) for x in pair] for A_i in self.base_A])
@@ -166,6 +167,7 @@ class Trainer:
         extended_c = np.array([x for pair in zip(c, -c) for x in pair])
         res = linprog(-extended_c, A_ub=self.base_A, b_ub=self.b, bounds=(0, None))
         weights = [res.x[i] - res.x[i + 1] for i in range(0, len(res.x), 2)]
+        # print(f"real H: {[str(self.disc_hamiltonians[i]) for i in range(len(self.disc_hamiltonians)) if abs(weights[i]) > 1.e-5]}")
         # print(f"real exp: {[real_exps[i] for i in range(len(self.disc_hamiltonians)) if abs(weights[i]) > 1.e-5]}")
         return [weights[i] for i in range(len(self.disc_hamiltonians)) if abs(weights[i]) > 1.e-5], \
                [self.disc_hamiltonians[i] for i in range(len(self.disc_hamiltonians)) if abs(weights[i]) > 1.e-5], \
@@ -213,10 +215,10 @@ class Trainer:
             g = self.g_provider()
             return self._filter_expectations_by_pauli_strings(
                 operators,
-                self.real_expectations_provider.get_expectations_for_parameters([g])[g])
+                self.real_expectations_provider.get_expectations_for_parameters(set(operators), [g])[g])
         else:
             parameter_to_expectation_dict = \
-                self.real_expectations_provider.get_expectations_for_parameters(self.g_values)
+                self.real_expectations_provider.get_expectations_for_parameters(set(operators), self.g_values)
             # print(f"params: {parameter_to_expectation_dict}, g: {self.g_values}")
             return functools.reduce(lambda acc, x: acc + (1 / (len(self.g_values))) * x,
                                     [self._filter_expectations_by_pauli_strings(operators, pauli_string_to_expectation)

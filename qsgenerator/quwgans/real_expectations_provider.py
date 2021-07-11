@@ -2,7 +2,7 @@ import random
 import time
 from collections import defaultdict
 from enum import Enum
-from typing import List, Any, Callable, Tuple, Dict
+from typing import List, Any, Callable, Tuple, Dict, Set
 
 import cirq
 import neptune
@@ -22,16 +22,13 @@ from qsgenerator.quwgans.circuits import get_discriminator
 class RealExpectationsProvider(ABC):
 
     @abstractmethod
-    def get_expectations_for_parameters(self, parameters: List[Any], filter_small_expectations: bool = True) \
+    def get_expectations_for_parameters(self, pauli_strings: Set[cirq.PauliString], parameters: List[Any],
+                                        filter_small_expectations: bool = True) \
             -> Dict[Any, Dict[cirq.PauliString, float]]:
         pass
 
     @abstractmethod
-    def initialize(self):
-        pass
-
-    @abstractmethod
-    def get_pauli_strings_and_indexes(self) -> Tuple[List[cirq.PauliString], Dict[cirq.Qid, List[int]]]:
+    def initialize(self, pauli_strings: Set[cirq.PauliString] = None):
         pass
 
 
@@ -42,7 +39,6 @@ class PrecomputedExpectationsProvider(RealExpectationsProvider):
                  real_symbols: Tuple[sympy.Symbol],
                  real_state_parameters: List[Any],
                  real_values_provider: Callable,
-                 pauli_strings_and_indexes: Tuple[List[cirq.PauliString], Dict[cirq.Qid, List[int]]] = None,
                  eps: float = 1.e-5,
                  sampling_repetitions: int = 1000,
                  use_analytical_expectation: bool = True,
@@ -54,12 +50,12 @@ class PrecomputedExpectationsProvider(RealExpectationsProvider):
         self.eps = eps
         self.sampling_repetitions = sampling_repetitions
         self.real_values_provider = real_values_provider
-        self.pauli_strings_and_indexes = pauli_strings_and_indexes
-        if pauli_strings_and_indexes is not None:
-            self.pauli_strings = pauli_strings_and_indexes[0]
-            self.qubit_to_string_index = pauli_strings_and_indexes[1]
-        else:
-            self.pauli_strings, self.qubit_to_string_index = get_discriminator(real)
+        # self.pauli_strings_and_indexes = pauli_strings_and_indexes
+        # if pauli_strings_and_indexes is not None:
+        #     self.pauli_strings = pauli_strings_and_indexes[0]
+        #     self.qubit_to_string_index = pauli_strings_and_indexes[1]
+        # else:
+        #     self.pauli_strings, self.qubit_to_string_index = get_discriminator(real)
         self.real_state_parameters = real_state_parameters
         if use_analytical_expectation:
             self.real_expectation = tfq.layers.Expectation(differentiator=gradient_method_provider())
@@ -71,38 +67,54 @@ class PrecomputedExpectationsProvider(RealExpectationsProvider):
                 tfq.layers.SampledExpectation(differentiator=gradient_method_provider()))
         self.expectations = {}
 
-    def get_expectations_for_parameters(self, parameters: List[Any] = None, filter_small_expectations: bool = False) \
+    def get_expectations_for_parameters(self,
+                                        pauli_strings: Set[cirq.PauliString],
+                                        parameters: List[Any] = None,
+                                        filter_small_expectations: bool = False) \
             -> Dict[Any, Dict[cirq.PauliString, float]]:
         if parameters is None:
             parameters = self.real_state_parameters
-        expectations_dict = \
-            {param: {pauli_string: expectation for pauli_string, expectation
-                     in self.expectations.setdefault(param, {ps: e for ps, e in zip(self.pauli_strings,
-                                                                                    [el.numpy() for el in
-                                                                                     self._get_real_expectation(
-                                                                                         param)[0]])}).items()}
-             for param in parameters if param in self.real_state_parameters}
+
+        expectations_dict = defaultdict(dict)
+        for param in parameters:
+            if param in self.real_state_parameters:
+                for pauli_string in pauli_strings:
+                    if (param, pauli_string) not in self.expectations:
+                        self.expectations[(param, pauli_string)] = \
+                            self._get_real_expectation(param, pauli_string)[0][0].numpy()
+                    expectations_dict[param][pauli_string] = self.expectations[(param, pauli_string)]
+
+        # expectations_dict = \
+        #     {param: {pauli_string: expectation for pauli_string, expectation
+        #              in self.expectations.setdefault(param, {ps: e for ps, e in zip(self.pauli_strings,
+        #                                                                             [el.numpy() for el in
+        #                                                                              self._get_real_expectation(
+        #                                                                                  param)[0]])}).items()}
+        #      for param in parameters if param in self.real_state_parameters}
         if filter_small_expectations:
             string_with_non_negligible_expectations = set()
             for _, strings_to_exp in expectations_dict.items():
                 for pauli_string, exp in strings_to_exp.items():
                     if abs(exp) > self.eps:
                         string_with_non_negligible_expectations.add(pauli_string)
-            strings_with_negligible_expectations = set(self.pauli_strings) - string_with_non_negligible_expectations
+            strings_with_negligible_expectations = set(pauli_strings) - string_with_non_negligible_expectations
             for strings_to_exp in expectations_dict.values():
                 for pauli_string in strings_with_negligible_expectations:
                     strings_to_exp.pop(pauli_string, None)
         return expectations_dict
 
-    def get_expectations_for_random_batch(self, size: int = None, filter_small_expectations: bool = False) \
+    def get_expectations_for_random_batch(self, pauli_strings: Set[cirq.PauliString], size: int = None,
+                                          filter_small_expectations: bool = False) \
             -> Tuple[List[List[float]], List[cirq.PauliString]]:
         if size is None or size >= len(self.real_state_parameters):
-            expectations_dict = self.get_expectations_for_parameters(
-                filter_small_expectations=filter_small_expectations)
+            expectations_dict = self.get_expectations_for_parameters(pauli_strings,
+                                                                     filter_small_expectations=filter_small_expectations)
         else:
-            expectations_dict = self.get_expectations_for_parameters(
-                random.sample(list(self.real_state_parameters), min(size, len(self.real_state_parameters))),
-                filter_small_expectations=filter_small_expectations)
+            expectations_dict = self.get_expectations_for_parameters(pauli_strings,
+                                                                     random.sample(list(self.real_state_parameters),
+                                                                                   min(size, len(
+                                                                                       self.real_state_parameters))),
+                                                                     filter_small_expectations=filter_small_expectations)
         result = []
         string_used = list(list(expectations_dict.values())[0].keys())
         for _, string_exp in expectations_dict.items():
@@ -112,20 +124,20 @@ class PrecomputedExpectationsProvider(RealExpectationsProvider):
             result.append(exps)
         return result, string_used
 
-    def get_pauli_strings_and_indexes(self) -> Tuple[List[cirq.PauliString], Dict[cirq.Qid, List[int]]]:
-        return self.pauli_strings_and_indexes
+    # def get_pauli_strings_and_indexes(self) -> Tuple[List[cirq.PauliString], Dict[cirq.Qid, List[int]]]:
+    #     return self.pauli_strings_and_indexes
 
-    def initialize(self):
+    def initialize(self, pauli_strings: Set[cirq.PauliString] = None):
         pass
 
-    def _get_real_expectation(self, parameter):
+    def _get_real_expectation(self, parameter, pauli_strings):
         full_weights = tf.keras.layers.Layer()(
             tf.Variable(np.array(self.real_values_provider(parameter), dtype=np.float32)))
         full_weights = tf.reshape(full_weights, (1, full_weights.shape[0]))
         return self.real_expectation([self.real],
                                      symbol_names=self.real_symbols,
                                      symbol_values=full_weights,
-                                     operators=self.pauli_strings)
+                                     operators=pauli_strings)
 
     def _get_sampled_expectation(self, expectation):
         return lambda circuit, symbol_names, symbol_values, operators: \
@@ -141,36 +153,42 @@ class Interpolation1DExpectationsProvider(RealExpectationsProvider):
     def __init__(self, precomputed_expectations_provider: PrecomputedExpectationsProvider):
         self.precomputed_expectations_provider = precomputed_expectations_provider
         self.x = self.precomputed_expectations_provider.real_state_parameters
-        self.interpolation_tuples = None
+        self.interpolation_tuples: Dict[cirq.PauliString, Tuple] = {}
         self.expectations = {}
 
-    def get_expectations_for_parameters(self, parameters: List[Any], filter_small_expectations: bool = False) \
+    def get_expectations_for_parameters(self, pauli_strings: Set[cirq.PauliString], parameters: List[Any],
+                                        filter_small_expectations: bool = False) \
             -> Dict[Any, Dict[cirq.PauliString, float]]:
-        if self.interpolation_tuples is None:
-            self.initialize()
-        return \
-            {
-                param:
-                    {
-                        pauli_string: expectation.tolist() for pauli_string, expectation in
-                        self.expectations.setdefault(
-                            param,
-                            {
-                                ps: interpolate.splev(param, self.interpolation_tuples[ps], der=0)
-                                for ps in self.precomputed_expectations_provider.pauli_strings
-                            }).items()
-                    }
-                for param in parameters
-            }
+        self._update_interpolation_tuples(pauli_strings)
+        expectations = defaultdict(dict)
+        for param in parameters:
+            for pauli_string in pauli_strings:
+                if (param, pauli_string) not in self.expectations:
+                    self.expectations[(param, pauli_string)] = \
+                        interpolate.splev(param, self.interpolation_tuples[ pauli_string], der=0)
+                expectations[param][pauli_string] = self.expectations[(param, pauli_string)].tolist()
+        return expectations
 
-    def initialize(self):
-        self.interpolation_tuples = self._create_interpolation_tuples()
+        # return \
+        #     {
+        #         param:
+        #             {
+        #                 pauli_string: expectation.tolist() for pauli_string, expectation in
+        #                 self.expectations.setdefault(
+        #                     param,
+        #                     {
+        #                         ps: interpolate.splev(param, self.interpolation_tuples[ps], der=0)
+        #                         for ps in pauli_strings
+        #                     }).items()
+        #             }
+        #         for param in parameters
+        #     }
 
-    def get_pauli_strings_and_indexes(self) -> Tuple[List[cirq.PauliString], Dict[cirq.Qid, List[int]]]:
-        return self.precomputed_expectations_provider.pauli_strings_and_indexes
+    def initialize(self, pauli_strings: Set[cirq.PauliString] = None):
+        pass
 
-    def _get_expectations_by_pauli_string_sorted(self):
-        precomputed_expectations = self.precomputed_expectations_provider.get_expectations_for_parameters()
+    def _get_expectations_by_pauli_string_sorted(self, pauli_strings: Set[cirq.PauliString]):
+        precomputed_expectations = self.precomputed_expectations_provider.get_expectations_for_parameters(pauli_strings)
         expectations = defaultdict(list)
         for param in sorted(precomputed_expectations.keys()):
             expectation_for_param = precomputed_expectations[param]
@@ -178,10 +196,13 @@ class Interpolation1DExpectationsProvider(RealExpectationsProvider):
                 expectations[pauli_string].append(exp)
         return expectations
 
-    def _create_interpolation_tuples(self) -> Dict[cirq.PauliString, Tuple]:
+    def _update_interpolation_tuples(self, pauli_strings: Set[cirq.PauliString]):
+        new_pauli_strings = pauli_strings.difference(self.interpolation_tuples.keys())
+        for pauli_string, expectations in self._get_expectations_by_pauli_string_sorted(new_pauli_strings).items():
+            self.interpolation_tuples[pauli_string] = interpolate.splrep(self.x, expectations, s=0)
 
-        return {pauli_string: interpolate.splrep(self.x, expectations, s=0) for pauli_string, expectations in
-                self._get_expectations_by_pauli_string_sorted().items()}
+        # return {pauli_string: interpolate.splrep(self.x, expectations, s=0) for pauli_string, expectations in
+        #         self._get_expectations_by_pauli_string_sorted(pauli_strings).items()}
 
 
 class WassersteinGanExpectationProvider(RealExpectationsProvider):
@@ -214,8 +235,9 @@ class WassersteinGanExpectationProvider(RealExpectationsProvider):
         self.generator_optimizer = tf.keras.optimizers.Adam(alpha, beta_1=beta_1, beta_2=beta_2)
         self.discriminator_optimizer = tf.keras.optimizers.Adam(alpha, beta_1=beta_1, beta_2=beta_2)
         self.precomputed_expectations_provider = precomputed_expectations_provider
-        self.used_pauli_strings = precomputed_expectations_provider.pauli_strings
-        self.input_dim = len(self.used_pauli_strings)
+        # self.used_pauli_strings = precomputed_expectations_provider.pauli_strings
+        self.used_pauli_strings = None
+        self.input_dim = None
         self.discriminator = None
         self.generator = None
         self.expectations = {}
@@ -223,25 +245,27 @@ class WassersteinGanExpectationProvider(RealExpectationsProvider):
         self.report_interval_epochs = report_interval_epochs
         self.seed = np.random.randint(0, 2 ** 31 - 1) if seed is None else seed
 
-    def get_expectations_for_parameters(self, parameters: List[Any], filter_small_expectations: bool = False) \
+    def get_expectations_for_parameters(self, pauli_strings: Set[cirq.PauliString], parameters: List[Any],
+                                        filter_small_expectations: bool = False) \
             -> Dict[Any, Dict[cirq.PauliString, float]]:
         if not self.initialized:
-            self.initialize()
+            self.initialize(pauli_strings)
         generated_expectations = {param: self.expectations.setdefault(param,
                                                                       {pauli_string: exp for pauli_string, exp in
                                                                        zip(self.used_pauli_strings,
                                                                            self._get_scaled_generated_vector())})
                                   for param in parameters}
         for param, string_to_expectation in generated_expectations.items():
-            for pauli_string in self.precomputed_expectations_provider.pauli_strings:
+            for pauli_string in pauli_strings:
                 if pauli_string not in string_to_expectation:
                     string_to_expectation[pauli_string] = 0
 
         return generated_expectations
 
-    def initialize(self):
+    def initialize(self, pauli_strings: Set[cirq.PauliString] = None):
         self.initialized = True
         expectations, pauli_strings = self.precomputed_expectations_provider.get_expectations_for_random_batch(
+            pauli_strings,
             filter_small_expectations=self.filter_small_expectations)
         self.used_pauli_strings = pauli_strings
         self.input_dim = len(self.used_pauli_strings)
@@ -280,9 +304,6 @@ class WassersteinGanExpectationProvider(RealExpectationsProvider):
                 print(f"Epoch: {epoch}, time for last {self.report_interval_epochs} epochs {time.time() - start}")
                 print(f"Last epoch gen loss: {average_epoch_gen_loss}, disc loss: {average_epoch_disc_loss}")
                 start = time.time()
-
-    def get_pauli_strings_and_indexes(self) -> Tuple[List[cirq.PauliString], Dict[cirq.Qid, List[int]]]:
-        return self.precomputed_expectations_provider.pauli_strings_and_indexes
 
     def train_step(self, batch):
         avg_disc_loss = 0
@@ -427,8 +448,9 @@ class WassersteinGanExpectationProvider(RealExpectationsProvider):
 
     def _get_scaled_generated_vector(self):
         if self.use_convolutions:
-            return [el[0] for el in ((self.generator(tf.random.uniform([1, self.gen_input_dim], minval=-1, maxval=1)).numpy()[0] * 2) - 1)[
-                   :len(self.used_pauli_strings)]]
+            return [el[0] for el in ((self.generator(
+                tf.random.uniform([1, self.gen_input_dim], minval=-1, maxval=1)).numpy()[0] * 2) - 1)[
+                                    :len(self.used_pauli_strings)]]
         return (self.generator(tf.random.uniform([1, self.gen_input_dim], minval=-1, maxval=1)).numpy()[0] * 2) - 1
 
     # def _get_scaled_generated_vector(self):
