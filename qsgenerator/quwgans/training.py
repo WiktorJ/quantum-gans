@@ -112,9 +112,9 @@ class Trainer:
             for step in range(gen_iteration):
                 opt.minimize(lambda: self.gen_cost(w, h), self.var_list)
                 # probabilities normalization
-                s = sum(el[0] for el in self.gen_weights)
+                s = sum(abs(el[0]) for el in self.gen_weights)
                 for p, _, _ in self.gen_weights:
-                    p.assign(p / s)
+                    p.assign(abs(p) / s)
 
             self._update_snapshot(em_distance, fidelities, gen_fidelities, trace_distance, abs_trace_distance,
                                   {k: v for k, v in zip(w, h)}, generated, real, epoch, snapshot_interval_epochs)
@@ -169,9 +169,10 @@ class Trainer:
         weights = [res.x[i] - res.x[i + 1] for i in range(0, len(res.x), 2)]
         # print(f"real H: {[str(self.disc_hamiltonians[i]) for i in range(len(self.disc_hamiltonians)) if abs(weights[i]) > 1.e-5]}")
         # print(f"real exp: {[real_exps[i] for i in range(len(self.disc_hamiltonians)) if abs(weights[i]) > 1.e-5]}")
+        filtered_c = [c[i] for i in range(len(self.disc_hamiltonians)) if abs(weights[i]) > 1.e-5]
         return [weights[i] for i in range(len(self.disc_hamiltonians)) if abs(weights[i]) > 1.e-5], \
                [self.disc_hamiltonians[i] for i in range(len(self.disc_hamiltonians)) if abs(weights[i]) > 1.e-5], \
-               [c[i] for i in range(len(self.disc_hamiltonians)) if abs(weights[i]) > 1.e-5]
+               filtered_c
 
     def gen_cost(self, max_w, max_h):
         exps = self.get_all_generator_expectations(max_h)

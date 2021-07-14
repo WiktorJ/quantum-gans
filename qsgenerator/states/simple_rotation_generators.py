@@ -22,7 +22,8 @@ def get_binary_x_rotation_provider(binary_mappings: Dict[float, str]):
 
 def get_arcsin_x_rotation_provider(bases: List[float], circuit_width: int):
     def provider(g: float):
-        return rotations[g]
+        return rotations[g
+        ]
 
     step = 0.1
     rotations = {}
