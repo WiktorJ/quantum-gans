@@ -29,6 +29,7 @@ size_4_ids_wqgans_phase_k_3_gen_4 = get_ids([39, 45, 51, 56, 60], id_prefix_wqga
 size_5_ids_wqgans_phase_k_3_gen_4 = get_ids([40, 46, 52, 57, 61], id_prefix_wqgans)
 size_6_ids_wqgans_phase_k_3_gen_4 = get_ids([42, 48, 53, 58, 62], id_prefix_wqgans)
 size_7_ids_wqgans_phase_k_3_gen_4 = get_ids([43, 50, 55, 59, 63], id_prefix_wqgans)
+size_8_ids_wqgans_phase_k_3_gen_4 = get_ids([43, 50, 55, 59, 63], id_prefix_wqgans)
 
 size_6_ids_wqgans_phase_k_3_gen_5 = get_ids([64, 69, 74], id_prefix_wqgans)
 size_7_ids_wqgans_phase_k_3_gen_5 = get_ids([65, 71, 75], id_prefix_wqgans)
@@ -157,9 +158,54 @@ size_7_ids_wqgans_butterfly_k_4_gen_4 = {
 
 size_8_ids_wqgans_butterfly_k_4_gen_4 = {
     'ids': get_ids([167, 183, 209, 212, 218], id_prefix_wqgans),
-    'size': 7,
+    'size': 8,
     'k': 4,
     'gen': 4,
+    'type': 'butterfly',
+    'color': colors[3]
+}
+
+size_4_ids_wqgans_butterfly_k_3_gen_4_same = {
+    'ids': get_ids([246, 252, 264, 270], id_prefix_wqgans),
+    'size': 4,
+    'k': 3,
+    'gen': "same as real",
+    'type': 'butterfly',
+    'color': colors[3]
+}
+
+size_5_ids_wqgans_butterfly_k_3_gen_4_same = {
+    'ids': get_ids([247, 253, 259, 265, 272], id_prefix_wqgans),
+    'size': 5,
+    'k': 3,
+    'gen': "same as real",
+    'type': 'butterfly',
+    'color': colors[3]
+}
+
+size_6_ids_wqgans_butterfly_k_3_gen_4_same = {
+    'ids': get_ids([248, 254, 260, 266, 273, 279], id_prefix_wqgans),
+    'size': 6,
+    'k': 3,
+    'gen': "same as real",
+    'type': 'butterfly',
+    'color': colors[3]
+}
+
+size_7_ids_wqgans_butterfly_k_3_gen_4_same = {
+    'ids': get_ids([249, 255, 267, 274, 280], id_prefix_wqgans),
+    'size': 7,
+    'k': 3,
+    'gen': "same as real",
+    'type': 'butterfly',
+    'color': colors[3]
+}
+
+size_8_ids_wqgans_butterfly_k_3_gen_4_same = {
+    'ids': get_ids([256, 262, 268, 281], id_prefix_wqgans),
+    'size': 8,
+    'k': 3,
+    'gen': "same as real",
     'type': 'butterfly',
     'color': colors[3]
 }
@@ -224,15 +270,20 @@ for meta_dict in [
     # size_7_ids_wqgans_phase_k_4_gen_5,
     # size_8_ids_wqgans_phase_k_4_gen_5,
     # size_9_ids_wqgans_phase_k_4_gen_5,
-    size_5_ids_wqgans_butterfly_k_4_gen_4,
-    size_6_ids_wqgans_butterfly_k_4_gen_4,
+    # size_5_ids_wqgans_butterfly_k_4_gen_4,
+    # size_6_ids_wqgans_butterfly_k_4_gen_4,
     size_7_ids_wqgans_butterfly_k_4_gen_4,
     size_8_ids_wqgans_butterfly_k_4_gen_4,
+    # size_4_ids_wqgans_butterfly_k_3_gen_4_same,
+    # size_5_ids_wqgans_butterfly_k_3_gen_4_same,
+    # size_6_ids_wqgans_butterfly_k_3_gen_4_same,
+    # size_7_ids_wqgans_butterfly_k_3_gen_4_same,
+    # size_8_ids_wqgans_butterfly_k_3_gen_4_same,
 ]:
     metadata.append(
         {
             'ids': meta_dict['ids'],
-            'dir': f"wqgans_{meta_dict['type']}_size={meta_dict['size']}_k={meta_dict['k']}_gen={meta_dict['gen']}",
+            'dir': f"wqgans_{meta_dict['type']}_size={meta_dict['size']}_k={meta_dict['k']}_gen={str(meta_dict['gen']).replace(' ', '_')}",
             'sub_title': f"real input qubits = {meta_dict['size']}, gen layers = {meta_dict['gen']}, k = {meta_dict['k']}",
             'color': meta_dict['color']
         }
