@@ -27,7 +27,7 @@ size_5_ids = get_ids([42, 44, 46, 84, 85], id_prefix_sqgans)
 
 size_4_ids_wqgans_phase_k_3_gen_4 = get_ids([39, 45, 51, 56, 60], id_prefix_wqgans)
 size_5_ids_wqgans_phase_k_3_gen_4 = get_ids([40, 46, 52, 57, 61], id_prefix_wqgans)
-size_6_ids_wqgans_phase_k_3_gen_4 = get_ids([42, 48, 53, 58, 62], id_prefix_wqgans)
+size_6_ids_wqgans_phase_k_3_gen_4 = get_ids([42, 48, 53, 58, 294], id_prefix_wqgans)
 size_7_ids_wqgans_phase_k_3_gen_4 = get_ids([43, 50, 55, 59, 63], id_prefix_wqgans)
 size_8_ids_wqgans_phase_k_3_gen_4 = get_ids([43, 50, 55, 59, 63], id_prefix_wqgans)
 
@@ -54,7 +54,7 @@ size_7_ids_wqgans_phase_k_4_gen_5 = {
 }
 
 size_8_ids_wqgans_phase_k_4_gen_5 = {
-    'ids': get_ids([186, 190, 194, 198, 202], id_prefix_wqgans),
+    'ids': get_ids([329, 336, 338, 341, 347], id_prefix_wqgans),
     'size': 8,
     'k': 4,
     'gen': 5,
@@ -165,8 +165,17 @@ size_8_ids_wqgans_butterfly_k_4_gen_4 = {
     'color': colors[3]
 }
 
+size_8_ids_wqgans_butterfly_k_4_gen_5 = {
+    'ids': get_ids([304, 306, 307, 328, 329], id_prefix_wqgans),
+    'size': 8,
+    'k': 4,
+    'gen': 5,
+    'type': 'butterfly',
+    'color': colors[3]
+}
+
 size_4_ids_wqgans_butterfly_k_3_gen_4_same = {
-    'ids': get_ids([246, 252, 264, 270], id_prefix_wqgans),
+    'ids': get_ids([246, 264, 270], id_prefix_wqgans),
     'size': 4,
     'k': 3,
     'gen': "same as real",
@@ -239,6 +248,12 @@ metadata = [
     #         'color': colors[0]
     #     },
     #     {
+    #         'ids': size_8_ids_wqgans_phase_k_3_gen_4,
+    #         'dir': 'wqgans_phase_size=8_k=3_gen=4',
+    #         'sub_title': f"real input qubits = {8}, gen layers = {4}, k = 3",
+    #         'color': colors[0]
+    #     },
+    #     {
     #         'ids': size_6_ids_wqgans_phase_k_3_gen_5,
     #         'dir': 'wqgans_phase_size=6_k=3_gen=5',
     #         'sub_title': f"real input qubits = {6}, gen layers = {5}, k = 3",
@@ -268,17 +283,18 @@ for meta_dict in [
     # size_7_ids_wqgans_butterfly_k_3_gen_4,
     # size_6_ids_wqgans_phase_k_4_gen_5,
     # size_7_ids_wqgans_phase_k_4_gen_5,
-    # size_8_ids_wqgans_phase_k_4_gen_5,
+    size_8_ids_wqgans_phase_k_4_gen_5,
     # size_9_ids_wqgans_phase_k_4_gen_5,
     # size_5_ids_wqgans_butterfly_k_4_gen_4,
     # size_6_ids_wqgans_butterfly_k_4_gen_4,
-    size_7_ids_wqgans_butterfly_k_4_gen_4,
-    size_8_ids_wqgans_butterfly_k_4_gen_4,
+    # size_7_ids_wqgans_butterfly_k_4_gen_4,
+    # size_8_ids_wqgans_butterfly_k_4_gen_4,
     # size_4_ids_wqgans_butterfly_k_3_gen_4_same,
     # size_5_ids_wqgans_butterfly_k_3_gen_4_same,
     # size_6_ids_wqgans_butterfly_k_3_gen_4_same,
     # size_7_ids_wqgans_butterfly_k_3_gen_4_same,
     # size_8_ids_wqgans_butterfly_k_3_gen_4_same,
+    # size_8_ids_wqgans_butterfly_k_4_gen_5,
 ]:
     metadata.append(
         {

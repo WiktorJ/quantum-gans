@@ -536,8 +536,7 @@ For bigger real input sizes, expectation of larger operator is needed. The conve
 very fast, for $4$ generator layers only around $100$ epoch are necessary to
 achieve very good approximation, the improvements beyond that are rather
 minimal. For $5$ layers the training must be longer and it's much harder to
-achieve high fidelity. In fact for input size $8$ the results were better with
-$4$ layers. For more results refer to Appendix \ref{apx:wqgans_pahse_results}.
+achieve high fidelity. For more results refer to Appendix \ref{apx:wqgans_pahse_results}.
 
 
 
@@ -583,37 +582,39 @@ The results for the butterfly circuit estimation are shown in the Figure
 the circuit from Appendix \ref{apx:butterfly_ansatz} for randomly selected
 values in each gate and the generator is built using the generic ansatz from Appendix
 \ref{apx:sqgans_ansatz}. Again, no surprisingly the training gets more difficult
-as the real input size grows.
+as the real input size grows. However, in this case we can see that the results
+are worse than for the phase transition circuit.
+
 
 \begin{figure}[htbp!]
   \captionsetup[subfigure]{labelformat=empty}
   \centering
   \subfloat{
-    \includegraphics[width=0.25\linewidth]{figures/wqgans_phase_size=4_k=3_gen=4/fidelity.png}
+    \includegraphics[width=0.25\linewidth]{figures/wqgans_butterfly_size=4_k=3_gen=4/fidelity.png}
   }
   \subfloat{
-    \includegraphics[width=0.25\linewidth]{figures/wqgans_phase_size=6_k=3_gen=5/fidelity.png}
+    \includegraphics[width=0.25\linewidth]{figures/wqgans_butterfly_size=6_k=3_gen=4/fidelity.png}
   }
   \subfloat{
-    \includegraphics[width=0.25\linewidth]{figures/wqgans_phase_size=8_k=4_gen=4/fidelity.png}
+    \includegraphics[width=0.25\linewidth]{figures/wqgans_butterfly_size=8_k=4_gen=4/fidelity.png}
   }
   \subfloat{
-    \includegraphics[width=0.25\linewidth]{figures/wqgans_phase_size=8_k=4_gen=5/fidelity.png}
+    \includegraphics[width=0.25\linewidth]{figures/wqgans_butterfly_size=8_k=4_gen=5/fidelity.png}
   }
 
   \subfloat{
-    \includegraphics[width=0.25\linewidth]{figures/wqgans_phase_size=5_k=3_gen=4/Wasserstein_Distance.png}
+    \includegraphics[width=0.25\linewidth]{figures/wqgans_butterfly_size=5_k=3_gen=4/Wasserstein_Distance.png}
   }
   \subfloat{
-    \includegraphics[width=0.25\linewidth]{figures/wqgans_phase_size=6_k=3_gen=5/Wasserstein_Distance.png}
+    \includegraphics[width=0.25\linewidth]{figures/wqgans_butterfly_size=6_k=3_gen=4/Wasserstein_Distance.png}
   }
   \subfloat{
-    \includegraphics[width=0.25\linewidth]{figures/wqgans_phase_size=8_k=4_gen=4/Wasserstein_Distance.png}
+    \includegraphics[width=0.25\linewidth]{figures/wqgans_butterfly_size=8_k=4_gen=4/Wasserstein_Distance.png}
   }
   \subfloat{
-    \includegraphics[width=0.25\linewidth]{figures/wqgans_phase_size=8_k=4_gen=5/Wasserstein_Distance.png}
+    \includegraphics[width=0.25\linewidth]{figures/wqgans_butterfly_size=8_k=4_gen=5/Wasserstein_Distance.png}
   }
-  \caption{Results of topological phase transition estimation (ansatz Appendix \ref{apx:topological_phase_transition_ansatz}).
+  \caption{Results for butterfly circuit (ansatz Appendix \ref{apx:butterfly_ansatz}).
     The solid line represents the average value and the shaded area
     represents the range from 5 different experiments. The upper row shows the
     fidelity and the bottom row shows the corresponding Wasserstein distance. In all the
@@ -621,9 +622,119 @@ as the real input size grows.
   \label{fig:wqgans_res_butterfly_1}
 \end{figure}
 
-\subsubsection{Results For Mixed Real State}
-\subsubsection{Conclusions}
+It is interesting to compare those results, with the one obtained using the
+same circuit ansatz for both, real input and the generator. In Figure
+\ref{fig:wqgans_res_butterfly_same} we see the results for using the butterfly
+circuit for both, real input and generator. Regardless of the size, very high
+fidelity was achieved. This shows the importance of the generator design in the
+training process.
 
+
+\begin{figure}[htbp!]
+  \captionsetup[subfigure]{labelformat=empty}
+  \centering
+  \subfloat{
+    \includegraphics[width=0.25\linewidth]{figures/wqgans_butterfly_size=4_k=3_gen=same_as_real/fidelity.png}
+  }
+  \subfloat{
+    \includegraphics[width=0.25\linewidth]{figures/wqgans_butterfly_size=6_k=3_gen=same_as_real/fidelity.png}
+  }
+  \subfloat{
+    \includegraphics[width=0.25\linewidth]{figures/wqgans_butterfly_size=8_k=3_gen=same_as_real/fidelity.png}
+  }
+  \subfloat{
+    \includegraphics[width=0.25\linewidth]{figures/wqgans_butterfly_size=8_k=3_gen=same_as_real/fidelity.png}
+  }
+
+  \subfloat{
+    \includegraphics[width=0.25\linewidth]{figures/wqgans_butterfly_size=5_k=3_gen=same_as_real/Wasserstein_Distance.png}
+  }
+  \subfloat{
+    \includegraphics[width=0.25\linewidth]{figures/wqgans_butterfly_size=6_k=3_gen=same_as_real/Wasserstein_Distance.png}
+  }
+  \subfloat{
+    \includegraphics[width=0.25\linewidth]{figures/wqgans_butterfly_size=8_k=3_gen=same_as_real/Wasserstein_Distance.png}
+  }
+  \subfloat{
+    \includegraphics[width=0.25\linewidth]{figures/wqgans_butterfly_size=8_k=3_gen=same_as_real/Wasserstein_Distance.png}
+  }
+  \caption{Results for butterfly circuit (ansatz Appendix \ref{apx:butterfly_ansatz}).
+    The solid line represents the average value and the shaded area
+    represents the range from 5 different experiments. The upper row shows the
+    fidelity and the bottom row shows the corresponding Wasserstein distance. In all the
+    experiments the generator is built using the same butterfly circuit.}
+  \label{fig:wqgans_res_butterfly_same}
+\end{figure}
+
+
+In all the examples we see that the approximated Wasserstein distance approaches $0$
+as fidelity approaches $1$, which is the expected behavior. The Wasserstein
+distance below $1$ indicates high fidelity between real input and generated
+states.
+
+It is also important to note here, that using fixed $k$ might not be optimal
+strategy. If for given operator, the different between expectation of the
+generator and the real input source is close to $0$, this operator does not
+provide any useful information in context of learning anymore. So instead of
+evaluating all operators for given $k$, we can start with some subset and
+remove and add new ones as the training progresses \cite{kiani2021quantum}. 
+\subsubsection{Results For Mixed Real State}
+The generator definition allows for mixed state approximation. In theory each
+circuit in the generator should be able to learn different pure state and its
+probability in the mix. However, we found it difficult to achieve in practice.
+
+We did not manage to train mixed state generator using the generic ansatz. But
+when using the same ansatz for the real input and the generator we were able
+approximate an equal mixture of two topological phase transition circuits (results
+presented in Figure \ref{fig:wqgans_grid_phase_1}). The generator with 4 circuits
+used 2 of them to approximate the real input and also learnt the correct
+probability of $0.5$ for both of them. The other 2 circuits got assigned the
+probability close to $0$ and states far from the one in the real input.
+
+\begin{figure}[htbp!]
+  \captionsetup[subfigure]{labelformat=empty}
+  \centering
+  \subfloat{
+    \includegraphics[width=0.5\linewidth]{figures/fidelity_grid_phase.png}
+  }
+  \subfloat{
+    \includegraphics[width=0.5\linewidth]{figures/prob_grid_phase.png}
+  }
+  \label{fig:wqgans_grid_phase_1}
+  \caption{Results for topological phase transition circuit (Appendix
+    \ref{apx:topological_phase_transition_ansatz}). The real input source
+    produces two states (for $g=0$ and $g=-1$) each with $0.5$ probability.
+    The generator consist of 4 circuits, each with the same ansatz as the real
+    input. (left) the circuit with index $0$ learnt the state for $g=-1$ and the
+    circuit with index $2$ learnt the state for $g=0$. The other two circuits
+    did not any of the states well. (right) How far is the probability of given
+    circuit from the actual probability in the real input. For the circuit $0$
+    and $2$ the number is close to $0$, which means that the probability was
+    correctly learnt to be $0.5$, for the other two it's close to $0.5$, which
+    means it is correctly around $0$.
+  }
+\end{figure}
+
+The results for the mixture of 3 states in the real input were much worse. While
+there were signs that the generator was learning, usually one of the
+states was forgotten (i.e. the generator learnt only the mixture of 2 states).
+
+\subsubsection{Conclusions}
+Our experiments confirmed the ability to approximate quantum states using the
+quantum Wasserstein distance. It is easier to train such networks and they give
+better results than SQGANs. As the input size grows, increasing the Pauli
+Strings length $k$ allows for high approximation (at the cost of increased
+training complexity).
+
+The design of the generator plays a crucial role in the quality of the
+approximations. Better design also allows to use lower $k$ which makes the
+training more efficient.
+
+WQGANs also work for mixed state approximation, although only for small
+mixtures.
+
+However, this architecture still does not allow to generate new, unseen before,
+states. In the next chapter we explore ways in which this can be achieved using WQGANs. 
 
 %%% Local Variables:
 %%% mode: latex
