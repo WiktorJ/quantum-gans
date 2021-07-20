@@ -1,3 +1,50 @@
-\chapter{Unknown Quantum State Generation}\label{chapter:my_contribution}
+\chapter{Unseen Quantum State Generation}\label{chapter:my_contribution}
+In the previous chapter we evaluated two different types of quantum GANs. The
+common problem of those is the inability to generate new, unseen states. In this
+chapter we propose the hybrid classical-quantum framework that can overcome this limitation. 
+
+Our idea is based WQGANs and how the quantum Wasserstein distance is
+approximated during the training. The discriminator at every step approximates
+the distance between some fixed, real input state and the generated state which
+changes after each iteration. However, the discriminator never needs an access to
+the actual real input state, it only operates on the set of measured
+expectations.
+
+Given a parametrized circuits $U$
+and set of parameters $\Theta = \{\theta_i\}$ and a set of operators $H =
+\{H_j\}$, we prepare a set of vectors of expectations $S$. Each vector $s_{\theta_i}
+\in S$ contains the expectations of the circuit $U(\theta_i)$, such that
+$s_{\theta_i}^{(j)} = \langle H_j \rangle_{U(\theta_i)} $.
+
+Assuming that all the vectors in $S$ come from the same distribution $p_S$,
+the proposed framework is defined in two parts as follows:
+\begin{enumerate}
+\item \textit{Classical}: Takes as the input the set $S$ and uses it to learn a function $f:
+  \mathbb{R}^{n} \to \mathbb{R}^{|H|}$. Given an arbitrary vector $z \in
+  \mathbb{R}^n$ (e.g. random noise), this function produces a new vector $s' =
+  f(z)$ such that $s' \sim p_S$.  
+\item \textit{Quantum}: Takes $s'$ as the input and uses it as
+  expectations of real input source in the WQGANs setting described in the
+  previous chapter. The generator trained using $s'$ produces new, unseen before
+  quantum state.
+\end{enumerate}
+
+Once the function $f$ is learnt, it can be used arbitrary many times to produce
+new vectors of expectations.
+With those vectors, it is possible to generate new quantum states that come from
+some circuit $U(\theta')$, without ever knowing $U$ or $\theta'$.
+In the following sections, we show how exactly the function $f$ can be obtained
+for two different cases. 
 \section{Labeled State Generation}
+If the quantum state produced by circuit $U$ can be labeled by some continuous
+variable, we can use this fact to find the function $f$. Specifically, here we
+assume that there exist $g \in \mathbb{R}$, such that each element of parameters
+vector $\theta_i$ is a function of $g$, i.e. $\theta_i = [\theta^{(1)}(g),
+\theta^{(2)}(g), \ldots, \theta^{(k)}(g)]$. 
+
 \section{Unlabeled State Generation}
+
+%%% Local Variables:
+%%% mode: latex
+%%% TeX-master: "../main"
+%%% End:
