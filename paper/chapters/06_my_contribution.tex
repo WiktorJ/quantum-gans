@@ -1,4 +1,5 @@
-\chapter{Unseen Quantum State Generation}\label{chapter:my_contribution}
+\chapter{Unseen Quantum State Generation}
+\label{chapter:my_contribution}
 In the previous chapter we evaluated two different types of quantum GANs. The
 common problem of those is the inability to generate new, unseen states. In this
 chapter we propose the hybrid classical-quantum framework that can overcome this limitation. 
@@ -36,13 +37,26 @@ some circuit $U(\theta')$, without ever knowing $U$ or $\theta'$.
 In the following sections, we show how exactly the function $f$ can be obtained
 for two different cases. 
 \section{Labeled State Generation}
-If the quantum state produced by circuit $U$ can be labeled by some continuous
-variable, we can use this fact to find the function $f$. Specifically, here we
-assume that there exist $g \in \mathbb{R}$, such that each element of parameters
-vector $\theta_i$ is a function of $g$, i.e. $\theta_i = [\theta^{(1)}(g),
-\theta^{(2)}(g), \ldots, \theta^{(k)}(g)]$. 
+If the quantum state produced by the circuit $U$ can be labeled by some continuous
+variable, we can use this variable to find the function $f$.
+
+Specifically, here we assume that each parameter $\theta_i^{(j)}$ is described by some
+function, i.e. $\theta_i = \theta(g_i) = [\theta^{(1)}(g_i), \theta^{(2)}(g_i), \ldots,
+\theta^{(l)}(g_i)]$, for some $g_i \in V \subseteq 
+\mathbb{R}$, where $l$ is the number of parameters in the circuit $U$.
+We also assume that the expectations of the state produced by the
+circuit $U(\theta(g_i))$, can be described by some functions,
+i.e. $s_{\theta_i} = s(g_i) = [s^{(1)}(g_i), s^{(2)}(g_i), \ldots, s^{(|H|)}(g_i)]$.
+Then, the input to the classical part of the framework is the set $S$, together with
+corresponding $g_i$ for each $s_{\theta_i} = s(g_i) \in S$.
+Then, we can use function interpolation to find $s^{j}\ \forall_{j=1,\ldots,|H|}$.
+
+This approach can be used for the topological phase transition circuit from
+Appendix \ref{apx:topological_phase_transition_ansatz}. 
+
 
 \section{Unlabeled State Generation}
+text
 
 %%% Local Variables:
 %%% mode: latex
