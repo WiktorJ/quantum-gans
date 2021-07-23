@@ -45,15 +45,43 @@ function, i.e. $\theta_i = \theta(g_i) = [\theta^{(1)}(g_i), \theta^{(2)}(g_i), 
 \theta^{(l)}(g_i)]$, for some $g_i \in V \subseteq 
 \mathbb{R}$, where $l$ is the number of parameters in the circuit $U$.
 We also assume that the expectations of the state produced by the
-circuit $U(\theta(g_i))$, can be described by some functions,
-i.e. $s_{\theta_i} = s(g_i) = [s^{(1)}(g_i), s^{(2)}(g_i), \ldots, s^{(|H|)}(g_i)]$.
+circuit $U(\theta(g_i))$, can be described by some other functions,
+i.e. $s_{\theta_i} = s(g_i) = [s^{(1)}(g_i), s^{(2)}(g_i), \ldots,
+s^{(|H|)}(g_i)]$, $s^{(j)}: V \to [-1; 1]\ \forall_{j \in 1,\ldots,|H|}$.
 Then, the input to the classical part of the framework is the set $S$, together with
 corresponding $g_i$ for each $s_{\theta_i} = s(g_i) \in S$.
-Then, we can use function interpolation to find $s^{j}\ \forall_{j=1,\ldots,|H|}$.
+To find $s^{(j)}\ \forall_{j=1,\ldots,|H|}$ functions interpolation is
+sufficient. So, the function $f: V \to \mathbb{R}^{|H|}$ simply takes
+any value of $g \in V$ and returns the expectations for this value using
+interpolations of functions $s^{(j)}$.
 
-This approach can be used for the topological phase transition circuit from
-Appendix \ref{apx:topological_phase_transition_ansatz}. 
+This approach can be used when $U$ is the topological phase transition circuit from
+Appendix \ref{apx:topological_phase_transition_ansatz}. All the parameters of
+this circuit can be described by three functions $\theta_v, \theta_w, \theta_r$
+for $g \in V = [1; -1]$. To prepare the input to the classical part 
+ $m$ values of $g$ are sampled and the expectations of $U(\theta_v(g_i),
+\theta_w(g_i), \theta_r(g_i))\ \forall_{i=1,\ldots,m}$ for all k-length Pauli
+Strings operators are calculated. This data is used to interpolate the expectation functions for those
+operators.  
+In Figure \ref{fig:phase_exps} interpolated expectations of the circuit for
+$k=3$ and $m=11$ are plotted (only subset of the expectation is plotted for readability).
 
+\begin{figure}[htbp!]
+  \captionsetup[subfigure]{labelformat=empty}
+  \centering
+  \subfloat{
+    \includegraphics[width=1\linewidth]{figures/phase_exps/plot.png}
+  }
+  \label{fig:phase_exps}
+  \caption{Interpolated expectations of topological phase transition circuit (Appendix
+    \ref{apx:topological_phase_transition_ansatz}) with 5 qubits width for 20
+    random 3-Pauli Strings operators. Interpolation using evenly
+    spaced 11 values of the parameter $g \in [-1; 0]$. 
+  }
+\end{figure}
+
+The interpolated expectations are used to learn the quantum states for
+the values of $g$ that were not part of the classical part input. [PLOT]
 
 \section{Unlabeled State Generation}
 text

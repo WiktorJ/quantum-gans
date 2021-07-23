@@ -219,6 +219,15 @@ size_8_ids_wqgans_butterfly_k_3_gen_4_same = {
     'color': colors[3]
 }
 
+size_8_ids_wqgans_butterfly_k_3_gen_4_same = {
+    'ids': get_ids([256, 262, 268, 281], id_prefix_wqgans),
+    'size': 8,
+    'k': 3,
+    'gen': "same as real",
+    'type': 'butterfly',
+    'color': colors[3]
+}
+
 metadata = [
     # {'ids': size_3_ids, 'dir': 'sqgans_size=3', 'sub_title': f"real input qubits = {3}"},
     # {'ids': size_4_ids, 'dir': 'sqgans_size=4', 'sub_title': f"real input qubits = {4}"},
@@ -283,7 +292,7 @@ for meta_dict in [
     # size_7_ids_wqgans_butterfly_k_3_gen_4,
     # size_6_ids_wqgans_phase_k_4_gen_5,
     # size_7_ids_wqgans_phase_k_4_gen_5,
-    size_8_ids_wqgans_phase_k_4_gen_5,
+    # size_8_ids_wqgans_phase_k_4_gen_5,
     # size_9_ids_wqgans_phase_k_4_gen_5,
     # size_5_ids_wqgans_butterfly_k_4_gen_4,
     # size_6_ids_wqgans_butterfly_k_4_gen_4,
