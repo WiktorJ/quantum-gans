@@ -88,15 +88,13 @@ setup is more natural to work with linear functions and since the $\log$ is
 convex, the optimum is the same for both.
 
 The cost function $\mathcal{L}(G, D)$ expressed in terms of measurements and
-assuming equal probability of sampling from $R$ and $G$ takes the form \ref{eq:SQGANs_objective}
+assuming equal probability of sampling from $R$ and $G$ takes the form \ref{eq:SQGANs_objective_trace}\cite{Dallaire_Demers_2018}.
 
 \begin{equation}
   \label{eq:SQGAN_objective_trace}
   \mathcal{L}(G, D) = \frac{1}{2} + \frac{1}{4\Lambda}\sum_{\lambda \in
   \Lambda}{}tr((\rho_\lambda^{DR}(\theta_D) - \rho_\lambda^{DG}(\theta_D, \theta_G, z))Z)
 \end{equation}
-For detailed derivation on how to get from \ref{eq:SQGANs_objective} to
-\ref{eq:SQGANs_objective} refer to Appendix \ref{apx:sqgans_cost_function}.
 
 \subsubsection{Gradient Estimation}
 To optimize the parameters $\theta_D$ and $\theta_G$ classical gradient descent
@@ -478,6 +476,7 @@ The generator tries to minimize the quantum Wasserstein distance to the real
 input state, so in general terms WQGANs optimization objective is stated as:
 \begin{equation}
   \max_{w}{\min_{\theta}{\mathcal{L}(w, \theta)}} = \max_{w}{\min_{\theta}{(\sum_{i=1}^Nw_i(Tr[\rho_rH_i] - Tr[G(\theta)H_i]))}} 
+  \label{eq:wqgans_optimization_objective}
 \end{equation}
 In practice however, we do not have to calculate the expectation $Tr[G(\theta)H_i]$ for
 every $i$ when training the Generator, instead we can use the $\hat{H}$ defined
@@ -547,7 +546,7 @@ achieve high fidelity. For more results refer to Appendix \ref{apx:wqgans_pahse_
     \includegraphics[width=0.25\linewidth]{figures/wqgans_phase_size=4_k=3_gen=4/fidelity.png}
   }
   \subfloat{
-    \includegraphics[width=0.25\linewidth]{figures/wqgans_phase_size=6_k=3_gen=5/fidelity.png}
+    \includegraphics[width=0.25\linewidth]{figures/wqgans_phase_size=6_k=3_gen=4/fidelity.png}
   }
   \subfloat{
     \includegraphics[width=0.25\linewidth]{figures/wqgans_phase_size=8_k=4_gen=4/fidelity.png}
@@ -557,7 +556,7 @@ achieve high fidelity. For more results refer to Appendix \ref{apx:wqgans_pahse_
   }
 
   \subfloat{
-    \includegraphics[width=0.25\linewidth]{figures/wqgans_phase_size=5_k=3_gen=4/Wasserstein_Distance.png}
+    \includegraphics[width=0.25\linewidth]{figures/wqgans_phase_size=4_k=3_gen=4/Wasserstein_Distance.png}
   }
   \subfloat{
     \includegraphics[width=0.25\linewidth]{figures/wqgans_phase_size=6_k=3_gen=5/Wasserstein_Distance.png}
@@ -634,29 +633,29 @@ training process.
   \captionsetup[subfigure]{labelformat=empty}
   \centering
   \subfloat{
-    \includegraphics[width=0.25\linewidth]{figures/wqgans_butterfly_size=4_k=3_gen=same_as_real/fidelity.png}
+    \includegraphics[width=0.25\linewidth]{figures/wqgans_butterfly_size=4_k=2_gen=same_as_real/fidelity.png}
   }
   \subfloat{
-    \includegraphics[width=0.25\linewidth]{figures/wqgans_butterfly_size=6_k=3_gen=same_as_real/fidelity.png}
+    \includegraphics[width=0.25\linewidth]{figures/wqgans_butterfly_size=6_k=2_gen=same_as_real/fidelity.png}
   }
   \subfloat{
-    \includegraphics[width=0.25\linewidth]{figures/wqgans_butterfly_size=8_k=3_gen=same_as_real/fidelity.png}
+    \includegraphics[width=0.25\linewidth]{figures/wqgans_butterfly_size=8_k=2_gen=same_as_real/fidelity.png}
   }
   \subfloat{
-    \includegraphics[width=0.25\linewidth]{figures/wqgans_butterfly_size=8_k=3_gen=same_as_real/fidelity.png}
+    \includegraphics[width=0.25\linewidth]{figures/wqgans_butterfly_size=10_k=3_gen=same_as_real/fidelity.png}
   }
 
   \subfloat{
-    \includegraphics[width=0.25\linewidth]{figures/wqgans_butterfly_size=5_k=3_gen=same_as_real/Wasserstein_Distance.png}
+    \includegraphics[width=0.25\linewidth]{figures/wqgans_butterfly_size=4_k=2_gen=same_as_real/Wasserstein_Distance.png}
   }
   \subfloat{
-    \includegraphics[width=0.25\linewidth]{figures/wqgans_butterfly_size=6_k=3_gen=same_as_real/Wasserstein_Distance.png}
+    \includegraphics[width=0.25\linewidth]{figures/wqgans_butterfly_size=6_k=2_gen=same_as_real/Wasserstein_Distance.png}
   }
   \subfloat{
-    \includegraphics[width=0.25\linewidth]{figures/wqgans_butterfly_size=8_k=3_gen=same_as_real/Wasserstein_Distance.png}
+    \includegraphics[width=0.25\linewidth]{figures/wqgans_butterfly_size=8_k=2_gen=same_as_real/Wasserstein_Distance.png}
   }
   \subfloat{
-    \includegraphics[width=0.25\linewidth]{figures/wqgans_butterfly_size=8_k=3_gen=same_as_real/Wasserstein_Distance.png}
+    \includegraphics[width=0.25\linewidth]{figures/wqgans_butterfly_size=10_k=3_gen=same_as_real/Wasserstein_Distance.png}
   }
   \caption{Results for butterfly circuit (ansatz Appendix \ref{apx:butterfly_ansatz}).
     The solid line represents the average value and the shaded area

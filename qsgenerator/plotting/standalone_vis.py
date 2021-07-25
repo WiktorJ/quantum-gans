@@ -1,23 +1,16 @@
 from collections import defaultdict
 from pathlib import Path
 
-import neptune.new as neptune
 import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
 import seaborn as sns
 
+from qsgenerator.plotting.utils import get_ids, id_prefix_sqgans, id_prefix_wqgans, get_data_for_id
+
 sns.set()
 
 FIG_PATH_PREFIX = "/Users/wiktorjurasz/Studies/thesis/paper/figures"
-
-id_prefix_sqgans = "THES-"
-id_prefix_wqgans = "THES2-"
-
-
-def get_ids(pure_ids, prefix):
-    return [f"{prefix}{el}" for el in pure_ids]
-
 
 colors = sns.color_palette("husl", 5)
 
@@ -219,13 +212,124 @@ size_8_ids_wqgans_butterfly_k_3_gen_4_same = {
     'color': colors[3]
 }
 
-size_8_ids_wqgans_butterfly_k_3_gen_4_same = {
-    'ids': get_ids([256, 262, 268, 281], id_prefix_wqgans),
+size_4_ids_wqgans_butterfly_k_2_gen_4_same = {
+    'ids': get_ids([330, 339, 349, 363, 370], id_prefix_wqgans),
+    'size': 4,
+    'k': 2,
+    'gen': "same as real",
+    'type': 'butterfly',
+    'color': colors[3]
+}
+
+size_5_ids_wqgans_butterfly_k_2_gen_4_same = {
+    'ids': get_ids([340, 350, 357, 371, 377], id_prefix_wqgans),
+    'size': 5,
+    'k': 2,
+    'gen': "same as real",
+    'type': 'butterfly',
+    'color': colors[3]
+}
+
+size_6_ids_wqgans_butterfly_k_2_gen_4_same = {
+    'ids': get_ids([342, 351, 358, 378], id_prefix_wqgans),
+    'size': 6,
+    'k': 2,
+    'gen': "same as real",
+    'type': 'butterfly',
+    'color': colors[3]
+}
+
+size_7_ids_wqgans_butterfly_k_2_gen_4_same = {
+    'ids': get_ids([343, 352, 359, 373, 379], id_prefix_wqgans),
+    'size': 7,
+    'k': 2,
+    'gen': "same as real",
+    'type': 'butterfly',
+    'color': colors[3]
+}
+
+size_8_ids_wqgans_butterfly_k_2_gen_4_same = {
+    'ids': get_ids([344, 353, 367], id_prefix_wqgans),
     'size': 8,
+    'k': 2,
+    'gen': "same as real",
+    'type': 'butterfly',
+    'color': colors[3]
+}
+size_9_ids_wqgans_butterfly_k_2_gen_4_same = {
+    'ids': get_ids([335, 345, 361, 368, 375], id_prefix_wqgans),
+    'size': 9,
+    'k': 2,
+    'gen': "same as real",
+    'type': 'butterfly',
+    'color': colors[3]
+}
+size_10_ids_wqgans_butterfly_k_3_gen_4_same = {
+    'ids': get_ids([384, 436, 439, 441], id_prefix_wqgans),
+    'size': 10,
     'k': 3,
     'gen': "same as real",
     'type': 'butterfly',
     'color': colors[3]
+}
+
+size_4_ids_wqgans_phase_k_3_gen_4_interpolation = {
+    'ids': get_ids([433, 415, 414, 413, 412], id_prefix_wqgans),
+    'size': 4,
+    'k': 3,
+    'gen': "4",
+    'type': 'phase',
+    'color': colors[3],
+    'suffix': 'interpolation'
+}
+
+size_5_ids_wqgans_phase_k_3_gen_4_interpolation = {
+    'ids': get_ids([433, 415, 414, 413, 412], id_prefix_wqgans),
+    'size': 5,
+    'k': 3,
+    'gen': "4",
+    'type': 'phase',
+    'color': colors[3],
+    'suffix': 'interpolation'
+}
+
+size_6_ids_wqgans_phase_k_3_gen_4_interpolation = {
+    'ids': get_ids([434, 420, 419, 418, 417], id_prefix_wqgans),
+    'size': 6,
+    'k': 3,
+    'gen': "4",
+    'type': 'phase',
+    'color': colors[3],
+    'suffix': 'interpolation'
+}
+
+size_7_ids_wqgans_phase_k_3_gen_4_interpolation = {
+    'ids': get_ids([434, 420, 419, 418, 417], id_prefix_wqgans),
+    'size': 7,
+    'k': 3,
+    'gen': "4",
+    'type': 'phase',
+    'color': colors[3],
+    'suffix': 'interpolation'
+}
+
+size_8_ids_wqgans_phase_k_4_gen_4_interpolation = {
+    'ids': get_ids([402, 403, 404, 405, 406], id_prefix_wqgans),
+    'size': 8,
+    'k': 4,
+    'gen': 4,
+    'type': 'phase',
+    'color': colors[3],
+    'suffix': 'interpolation'
+}
+size_8_ids_wqgans_phase_k_4_gen_5_interpolation = {
+    'ids': get_ids([408, 409, 410, 411, 407], id_prefix_wqgans),
+    'size': 8,
+    'k': 4,
+    'gen': 5,
+    'type': 'phase',
+    'color': colors[3],
+    'suffix': 'interpolation'
 }
 
 metadata = [
@@ -304,11 +408,28 @@ for meta_dict in [
     # size_7_ids_wqgans_butterfly_k_3_gen_4_same,
     # size_8_ids_wqgans_butterfly_k_3_gen_4_same,
     # size_8_ids_wqgans_butterfly_k_4_gen_5,
+    # size_4_ids_wqgans_phase_k_3_gen_4_interpolation,
+    # size_5_ids_wqgans_phase_k_3_gen_4_interpolation,
+    # size_6_ids_wqgans_phase_k_3_gen_4_interpolation,
+    # size_7_ids_wqgans_phase_k_3_gen_4_interpolation,
+    # size_4_ids_wqgans_butterfly_k_2_gen_4_same,
+    # size_5_ids_wqgans_butterfly_k_2_gen_4_same,
+    # size_6_ids_wqgans_butterfly_k_2_gen_4_same,
+    # size_7_ids_wqgans_butterfly_k_2_gen_4_same,
+    # size_8_ids_wqgans_butterfly_k_2_gen_4_same,
+    # size_9_ids_wqgans_butterfly_k_2_gen_4_same,
+    # size_10_ids_wqgans_butterfly_k_3_gen_4_same,
+    # size_8_ids_wqgans_phase_k_4_gen_4_interpolation,
+    # size_8_ids_wqgans_phase_k_4_gen_5_interpolation,
 ]:
+    if meta_dict.get('suffix'):
+        directory = f"wqgans_{meta_dict['type']}_size={meta_dict['size']}_k={meta_dict['k']}_gen={str(meta_dict['gen']).replace(' ', '_')}_{meta_dict['suffix']}"
+    else:
+        directory = f"wqgans_{meta_dict['type']}_size={meta_dict['size']}_k={meta_dict['k']}_gen={str(meta_dict['gen']).replace(' ', '_')}"
     metadata.append(
         {
             'ids': meta_dict['ids'],
-            'dir': f"wqgans_{meta_dict['type']}_size={meta_dict['size']}_k={meta_dict['k']}_gen={str(meta_dict['gen']).replace(' ', '_')}",
+            'dir': directory,
             'sub_title': f"real input qubits = {meta_dict['size']}, gen layers = {meta_dict['gen']}, k = {meta_dict['k']}",
             'color': meta_dict['color']
         }
@@ -324,13 +445,6 @@ metadata_per_project = {'thesis': {
         'em_distance': {'name': 'Wasserstein Distance', 'color': colors[1], 'ylim': (0, 5)}
     }
 }
-
-
-def get_data_for_id(rid, project):
-    return neptune.init(
-        project=f'wiktor.jurasz/{project}',
-        api_token=None,  # put the token in NEPTUNE_API_TOKEN env variable
-        run=rid)
 
 
 def get_data(ids, param_prefixes, project='thesis', filter_epoch=True):
