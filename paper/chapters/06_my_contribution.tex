@@ -182,7 +182,24 @@ notion can be extended to multi-variable case where $g \in V \subseteq
 
 
 \section{Unlabeled State Generation}
-text
+In the general case the assumptions from the previous Section do not hold and
+more powerful tools are need to find the function $f$. However, following the assumption
+that all vectors in input set $S$ come from the same distribution $p_S$, we can use
+the generative modeling to learn the function $f$. In particular, here we use
+classical Wasserstein Generative Adversarial Networks (WGANs) to approximate the
+distribution $p_S$ and later use the classical Generator as the function $f$ to
+produce the vectors $s'$. 
+
+\subsection{Evaluation Results}
+We use this technique to generate new, previously unseen states from the butterfly circuit
+(Appendix \ref{apx:butterfly_ansatz}). First we generate the set $S$ and use it
+to train a simple WGAN with gradient penalty\cite{gulrajani2017improved}, with
+penalty factor $10$. We use
+simple 2-layers deep neural network for both, generator and discriminator and Adam
+optimizer \cite{kingma2017adam} with the following parameters $\beta_1 = 0$,
+$\beta_2 = 0.9$, $\hat{\epsilon} = 1e - 9$ and learning rate of $0.0001$. The layers
+dimensions of generator and discriminator varies depending on the real input width 
+and are specified separately.
 
 %%% Local Variables:
 %%% mode: latex

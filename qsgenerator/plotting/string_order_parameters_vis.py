@@ -44,16 +44,16 @@ def analytical_transition_zy(g):
     return analytical_transition(g) if g < 0 else 0
 
 
-size_5_ids = get_ids([485, 487, 488, 490, 492, 452, 454, 456, 458, 459, 499, 500, 501, 502, 503], id_prefix_wqgans)
-size_6_ids = get_ids([434, 420, 419, 418, 417, 461, 463, 465, 467, 469, 505, 506, 507, 508, 509], id_prefix_wqgans)
-size_7_ids = get_ids([435, 425, 424, 423, 422, 471, 474, 475, 476, 479, 511, 512, 513, 514, 515], id_prefix_wqgans)
-size_8_ids = get_ids([428, 429, 430, 427, 431, 481, 484, 486, 489, 491, 517, 518, 519, 520, 521], id_prefix_wqgans)
+size_5_ids = get_ids([485, 487, 488, 490, 492, 452, 454, 456, 458, 459, 499, 500, 501, 502, 503, 529, 530, 531, 532, 533], id_prefix_wqgans)
+size_6_ids = get_ids([434, 420, 419, 418, 417, 461, 463, 465, 467, 469, 505, 506, 507, 508, 509, 535, 536, 537, 538, 539], id_prefix_wqgans)
+size_7_ids = get_ids([435, 425, 424, 423, 422, 471, 474, 475, 476, 479, 511, 512, 513, 514, 515, 541, 542, 543, 544, 545], id_prefix_wqgans)
+size_8_ids = get_ids([428, 429, 430, 427, 431, 481, 484, 486, 489, 491, 517, 518, 519, 520, 521, 547, 548, 549, 550, 551], id_prefix_wqgans)
 size_9_ids = get_ids([442, 443, 445, 446, 440], id_prefix_wqgans)
 metadata = [
-    # {'ids': size_5_ids, 'size': 5},
-    # {'ids': size_6_ids, 'size': 6},
-    # {'ids': size_7_ids, 'size': 7},
-    # {'ids': size_8_ids, 'size': 8},
+    {'ids': size_5_ids, 'size': 5},
+    {'ids': size_6_ids, 'size': 6},
+    {'ids': size_7_ids, 'size': 7},
+    {'ids': size_8_ids, 'size': 8},
     # {'ids': size_9_ids, 'size': 9},
 ]
 
