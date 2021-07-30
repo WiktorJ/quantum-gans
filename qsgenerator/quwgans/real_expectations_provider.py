@@ -39,7 +39,7 @@ class PrecomputedExpectationsProvider(RealExpectationsProvider):
                  real_symbols: Tuple[sympy.Symbol],
                  real_state_parameters: List[Any],
                  real_values_provider: Callable,
-                 eps: float = 1.e-5,
+                 eps: float = 0.05,
                  sampling_repetitions: int = 1000,
                  use_analytical_expectation: bool = True,
                  gradient_method_provider: Callable = None,
@@ -323,8 +323,8 @@ class WassersteinGanExpectationProvider(RealExpectationsProvider):
             self.discriminator_optimizer.apply_gradients(
                 zip(gradients_of_discriminator, self.discriminator.trainable_variables))
 
-        # noise = tf.random.normal([batch.shape[0], self.gen_input_dim])
-        noise = tf.random.uniform([batch.shape[0], self.gen_input_dim], minval=-1, maxval=1)
+        noise = tf.random.normal([batch.shape[0], self.gen_input_dim])
+        # noise = tf.random.uniform([batch.shape[0], self.gen_input_dim], minval=-1, maxval=1)
         with tf.GradientTape() as gen_tape:
             generated_expectations = self.generator(noise, training=True)
             fake_output = self.discriminator(generated_expectations, training=True)
@@ -392,6 +392,7 @@ class WassersteinGanExpectationProvider(RealExpectationsProvider):
                                    input_shape=(dims[-1],),
                                    kernel_initializer=tf.keras.initializers.GlorotNormal(seed=self.seed)))
             model.add(layers.Activation(tf.nn.sigmoid))
+            # model.add(layers.Activation(tf.nn.tanh))
         return model
 
     @staticmethod
@@ -442,7 +443,7 @@ class WassersteinGanExpectationProvider(RealExpectationsProvider):
             out = self.discriminator(x_hat, training=True)
         grad = pen_tape.gradient(out, x_hat)
         grad_norm = tf.sqrt(tf.reduce_sum(grad ** 2, axis=1))
-        grad_penalty = self.penalty_factor * tf.reduce_mean((grad_norm - 1) ** 2)
+        grad_penalty = tf.maximum(0, self.penalty_factor * tf.reduce_mean((grad_norm - 1) ** 2))
         base_loss = tf.reduce_mean(fake_vector) - tf.reduce_mean(real_vector)
         return base_loss, base_loss + grad_penalty
 
@@ -451,6 +452,7 @@ class WassersteinGanExpectationProvider(RealExpectationsProvider):
             return [el[0] for el in ((self.generator(
                 tf.random.uniform([1, self.gen_input_dim], minval=-1, maxval=1)).numpy()[0] * 2) - 1)[
                                     :len(self.used_pauli_strings)]]
+        # return self.generator(tf.random.uniform([1, self.gen_input_dim], minval=-1, maxval=1)).numpy()[0]
         return (self.generator(tf.random.uniform([1, self.gen_input_dim], minval=-1, maxval=1)).numpy()[0] * 2) - 1
 
     # def _get_scaled_generated_vector(self):
