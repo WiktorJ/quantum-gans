@@ -2,6 +2,7 @@ import neptune.new as neptune
 
 id_prefix_sqgans = "THES-"
 id_prefix_wqgans = "THES2-"
+id_prefix_wqgans_gans = "THES1-"
 
 
 def get_ids(pure_ids, prefix):

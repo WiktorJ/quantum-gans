@@ -6,7 +6,11 @@ import numpy as np
 import pandas as pd
 import seaborn as sns
 
-from qsgenerator.plotting.utils import get_ids, id_prefix_sqgans, id_prefix_wqgans, get_data_for_id
+from qsgenerator.plotting.utils import get_ids, \
+    id_prefix_sqgans, \
+    id_prefix_wqgans, \
+    get_data_for_id, \
+    id_prefix_wqgans_gans
 
 sns.set()
 
@@ -332,6 +336,36 @@ size_8_ids_wqgans_phase_k_4_gen_5_interpolation = {
     'suffix': 'interpolation'
 }
 
+size_4_ids_wqgans_butterfly_k_2_gen_same_gans = {
+    'ids': get_ids([266, 264, 263, 262, 261], id_prefix_wqgans_gans),
+    'size': 4,
+    'k': 2,
+    'gen': "same as real",
+    'type': 'butterfly',
+    'color': colors[3],
+    'suffix': 'gan'
+}
+
+size_6_ids_wqgans_butterfly_k_2_gen_same_gans = {
+    'ids': get_ids([272, 275, 197, 280, 278], id_prefix_wqgans_gans),
+    'size': 6,
+    'k': 2,
+    'gen': "same as real",
+    'type': 'butterfly',
+    'color': colors[3],
+    'suffix': 'gan'
+}
+
+size_8_ids_wqgans_butterfly_k_2_gen_same_gans = {
+    'ids': get_ids([301, 297, 298, 299, 296], id_prefix_wqgans_gans),
+    'size': 8,
+    'k': 2,
+    'gen': "same as real",
+    'type': 'butterfly',
+    'color': colors[3],
+    'suffix': 'gan'
+}
+
 metadata = [
     # {'ids': size_3_ids, 'dir': 'sqgans_size=3', 'sub_title': f"real input qubits = {3}"},
     # {'ids': size_4_ids, 'dir': 'sqgans_size=4', 'sub_title': f"real input qubits = {4}"},
@@ -421,6 +455,9 @@ for meta_dict in [
     # size_10_ids_wqgans_butterfly_k_3_gen_4_same,
     # size_8_ids_wqgans_phase_k_4_gen_4_interpolation,
     # size_8_ids_wqgans_phase_k_4_gen_5_interpolation,
+    size_4_ids_wqgans_butterfly_k_2_gen_same_gans,
+    size_6_ids_wqgans_butterfly_k_2_gen_same_gans,
+    size_8_ids_wqgans_butterfly_k_2_gen_same_gans,
 ]:
     if meta_dict.get('suffix'):
         directory = f"wqgans_{meta_dict['type']}_size={meta_dict['size']}_k={meta_dict['k']}_gen={str(meta_dict['gen']).replace(' ', '_')}_{meta_dict['suffix']}"
@@ -443,6 +480,10 @@ metadata_per_project = {'thesis': {
     'thesis-em2': {
         'fidelity (': {'name': 'fidelity', 'color': colors[0]},
         'em_distance': {'name': 'Wasserstein Distance', 'color': colors[1], 'ylim': (0, 5)}
+    },
+    'thesis-em-exps': {
+        'fidelity (': {'name': 'fidelity', 'color': colors[0]},
+        'em_distance': {'name': 'Wasserstein Distance', 'color': colors[1], 'ylim': (0, 5)}
     }
 }
 
@@ -455,6 +496,7 @@ def get_data(ids, param_prefixes, project='thesis', filter_epoch=True):
             field_name = [k for k in run.get_structure()['logs'].keys() if k.startswith(param_prefix)][0]
             res = run[f"logs/{field_name}"].fetch_values()
             res = res[['value']].to_numpy().flatten()
+            res = res[:401]
             if filter_epoch:
                 res = [el for i, el in enumerate(res) if i % 2 == 0]
             data[param_prefix].append(res)
@@ -480,7 +522,8 @@ def plot_metric(metric, data_name, color, sub_title, ylim):
     return fig
 
 
-project = 'thesis-em2'
+project = 'thesis-em-exps'
+# project = 'thesis-em2'
 # prefix_to_metrics_metadata = metadata_per_project['thesis']
 prefix_to_metrics_metadata = metadata_per_project[project]
 for meta in metadata:
