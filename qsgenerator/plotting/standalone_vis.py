@@ -455,9 +455,9 @@ for meta_dict in [
     # size_10_ids_wqgans_butterfly_k_3_gen_4_same,
     # size_8_ids_wqgans_phase_k_4_gen_4_interpolation,
     # size_8_ids_wqgans_phase_k_4_gen_5_interpolation,
-    size_4_ids_wqgans_butterfly_k_2_gen_same_gans,
-    size_6_ids_wqgans_butterfly_k_2_gen_same_gans,
-    size_8_ids_wqgans_butterfly_k_2_gen_same_gans,
+    # size_4_ids_wqgans_butterfly_k_2_gen_same_gans,
+    # size_6_ids_wqgans_butterfly_k_2_gen_same_gans,
+    # size_8_ids_wqgans_butterfly_k_2_gen_same_gans,
 ]:
     if meta_dict.get('suffix'):
         directory = f"wqgans_{meta_dict['type']}_size={meta_dict['size']}_k={meta_dict['k']}_gen={str(meta_dict['gen']).replace(' ', '_')}_{meta_dict['suffix']}"

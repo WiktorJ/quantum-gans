@@ -1,6 +1,61 @@
 \chapter{SGANs approximate Jensen–Shannon Divergence}
-
 \label{apx:JSD}
+KL divergence, by definition is stated as follows
+\begin{equation*}
+  D_{KL}(p || q) = \int_xp(x)log(\frac{p(x)}{q(x)})dx. 
+\end{equation*}
+
+Jensen-Shannon divergence is defined using KL divergence in the following
+way
+\begin{equation*}
+D_{JS}(p || q) = \frac{1}{2}(D_{KL}(p || \frac{p+q}{2}) + D_{KL}(q || \frac{p+q}{2})).
+\end{equation*}
+
+
+The SGANs loss function, using continuous expectation definition, is stated as follows
+\begin{equation*}
+  \begin{split}
+    \mathcal{L}(G, D) & =  \mathbb{E}_{x \sim p_r(x)}[\log{D(x)}] +  \mathbb{E}_{x \sim p_g(x)}[\log{1 - D(x)}] \\
+    & = \int_x(p_r(x)\log{(D(x))} + p_g(x)\log{(1-D(x))})dx \\
+    & = \int_xf(x)dx.
+  \end{split}
+\end{equation*}
+
+First, to find the optimal discriminator $D^*$, we find the maximum of the
+function $f(x)$.
+
+\begin{equation*}
+\begin{split}
+  \frac{df(x)}{dx} & = \frac{p_r(x)}{\ln{10} * D^*(x)} - \frac{p_g(x)}{\ln{10} * (1-D^*(x))} = 0 \Rightarrow \\
+  D^*(x) & = \frac{p_r(x)}{p_r(x) + p_g(x)}
+\end{split}
+\end{equation*}
+If so the loss function for $D^*(x)$ takes the form
+\begin{equation}
+  \mathcal{L}(G, D^*) = \int_x(p_r(x)\log{(\frac{p_r(x)}{p_r(x) + p_g(x)})} + p_g(x)\log{(\frac{p_g(x)}{p_r(x) + p_g(x)})}dx.
+  \label{eq:sgan_optimal_disc}
+\end{equation}
+For the optimal generator $G*$, the probabilities of predicting generated and
+real data are equal, i.e. $p_r=p_g$, and the loss function becomes constant
+\begin{equation}
+\mathcal{L}(G^*, D^*) = -log{4}.
+\label{eq:sgan_optimal_gen_disc}
+\end{equation}
+Now, we can rewrite Equation \ref{eq:sgan_optimal_disc} using the definition of KL
+divergence
+\begin{equation*}
+  \begin{split}
+    \mathcal{L}(G, D^*) & = D_{KL}(p_r || p_r + p_g) + D_{KL}(p_g || p_r + p_g) \\ 
+    & = D_{KL}(p_r || \frac{p_r + p_g}{2}) - \log{2} + D_{KL}(p_g || \frac{p_r + p_g}{2}) -\log{2} \\
+    & = D_{JS}(p_r || p_g) - log{4}
+  \end{split}
+\end{equation*}
+Using the Equation \ref{eq:sgan_optimal_gen_disc} for optimal loss we see that
+\begin{equation*}
+  \mathcal{L}(G^*, D^*) = D_{JS}(p_r || p_g) -log{4} =  - log{4}
+\end{equation*}
+from which we conclude that for optimal case of training the Jensen-Shannon
+divergence is $0$ and the distributions $p_r$ and $p_q$ are equal. $\qed$
 
 % If there are several additions you want to add, but they do not fit into the thesis itself, they belong here.
 
@@ -12,10 +67,55 @@
 \chapter{Circuits}
 \section{SQGANs Ansatz}
 \label{apx:sqgans_ansatz}
-
-
 \section{Topological Phase Transition Ansatz}
 \label{apx:topological_phase_transition_ansatz}
+\begin{figure}[htbp!]
+  \begin{tikzcd}
+    \lstick{$\ket{0}$} & \gate[2, disable auto height]{U_1(g)} & \qw & \qw & \qw &
+    \qw & \qw & \qw \\
+    \lstick{$\ket{0}$} & & \gate[2, disable auto height]{U(g)}  & \qw & \qw & \qw & \qw & \qw \\
+    \lstick{$\ket{0}$} & \qw & \qw & \gate[2, disable auto height]{U(g)}  & \qw & \qw & \qw & \qw \\
+    \lstick{$\ket{0}$} & \qw & \qw & \qw & \qw & \ldots  \\
+    \vdots & & & & &\ldots & \gate[2, disable auto height]{U(g)} & \qw \\
+    \lstick{$\ket{0}$} & \qw & \qw & \qw & \qw & \qw & \qw & \qw \\
+  \end{tikzcd}
+  \caption{The topological phase transition circuit studied in \cite{smith2020crossing} }
+  \label{fig:phase_circuit_apx}
+\end{figure}
+\begin{figure}[htbp!]
+  \begin{tikzcd}
+    \lstick{$\ket{0}$} & \gate{H} & \ctrl{1} & \qw & \qw & \gategroup[2, steps=3,
+    style={dashed, fill=blue!20, inner xsep=2pt}, background]{{
+        Only for g > 0}}\qw & \ctrl{1} & \qw & \qw \\
+    \lstick{$\ket{0}$} & \qw & \targ{} & \gate{Z} & \gate{R_y(\theta_r(g))} & \gate{H} & \targ{} &
+    \gate{H} & \qw
+  \end{tikzcd}
+  \caption{The schema of $U_1$ gate from the circuit in Figure \ref{fig:phase_circuit_apx}}
+  \label{fig:phase_circuit_u1}
+\end{figure}
+\begin{figure}[htbp!]
+  \begin{tikzcd}
+    \lstick{$\ket{\cdot}$} & \gate{X} & \ctrl{1} & \gate{X} & \qw & \qw & \qw & \ctrl{1} &
+     \qw & \gate{X} & \qw & \qw \\
+     \lstick{$\ket{0}$} &  \gate{R_y(\theta_w(g))}  & \targ{} &  \gate{X} & \gate{R_y(\theta_w(g))} & \gate{X} &  \gate{R_y(\theta_v(g))}
+     & \targ{} & \gate{X} & \gate{R_y(\theta_v(g))} & \gate{X} & \qw
+  \end{tikzcd}
+  \caption{The schema of $U$ gate from the circuit in Figure \ref{fig:phase_circuit_apx}}
+  \label{fig:phase_circuit_u}
+\end{figure}
+
+Where
+\begin{equation*}
+  \begin{split}
+    R_y(\theta) & = \begin{pmatrix}
+      \cos{\frac{\theta}{2}} & -\sin{\frac{\theta}{2}} \\
+      \sin{\frac{\theta}{2}} & \cos{\frac{\theta}{2}} 
+    \end{pmatrix} \\
+    \theta_w(g) & = \arccos{\frac{sign(g)\sqrt{|g|}}{\sqrt{1+|g|}}},\ \theta_w \in [0, \pi] \\
+    \theta_v(g) & = \arcsin{\frac{\sqrt{|g|}}{\sqrt{1+|g|}}},\ \theta_v \in [-\frac{\pi}{2}, \frac{\pi}{2}] \\
+    \theta_r(g) & = 2\arcsin{\frac{1}{\sqrt{1+|g|}}},\ \theta_r \in [-\pi, \pi] 
+  \end{split}
+\end{equation*}
 
 \section{Butterfly Ansatz}
 \label{apx:butterfly_ansatz}
@@ -210,3 +310,8 @@
 % \cmark
 % \section{Example 2}
 % \xmark
+
+%%% Local Variables:
+%%% mode: latex
+%%% TeX-master: "../main"
+%%% End:
