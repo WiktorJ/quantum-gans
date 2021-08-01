@@ -82,7 +82,7 @@ divergence is $0$ and the distributions $p_r$ and $p_q$ are equal. $\qed$
     \gate[2, disable auto height]{R_{zz}(\theta_{(w-2,w-1)}^{(i)})} & \vdots \\ 
     \qw &  \gate{R_x(\theta_{(x,w-1)}^{(i)})} & \gate{R_z(\theta_{(z,w-2)}^{(i)})} &
     \vdots & \gate[2, disable auto height]{R_{zz}(\theta_{(w-1,w)}^{(i)})} & \qw \\
-    \qw &  \gate{R_x(\theta_{(x,w)}^{(i)})} & \gate{R_z(\theta_{(z,w)}^{(i)})} &
+    \qw & \gate{R_x(\theta_{(x,w)}^{(i)})} & \gate{R_z(\theta_{(z,w)}^{(i)})} &
     \qw & \qw  & \qw
   \end{tikzcd}
   \caption{Single layer of the generic ansatz used for generator and
@@ -144,7 +144,65 @@ Where
 
 \section{Butterfly Ansatz}
 \label{apx:butterfly_ansatz}
-
+\begin{figure}[htbp!]
+\begin{tikzcd}
+\lstick{$\ket{0}$} & \gate{R_x(\theta_{(1,1)})} & \ctrl{1} &
+\gate{R_x(\theta_{(3,1)})} & \ctrl{2} & \qw & \gate{R_x(\theta_{(5,1)})} & \qw &
+\ldots & \rstick[wires=9]{$\ket{\psi}$}\\
+\lstick{$\ket{0}$} & \gate{R_x(\theta_{(1,2)})} & \gate{R_x(\theta_{(2,1)})}  &
+\gate{R_x(\theta_{(3,2)})} & \qw & \ctrl{2} & \gate{R_x(\theta_{(5,2)})} & \qw &
+\ldots & \\ 
+\lstick{$\ket{0}$} & \gate{R_x(\theta_{(1,3)})} & \ctrl{1} &
+\gate{R_x(\theta_{(3,3)})} & \gate{R_x(\theta{(4,1)})} & \qw & \gate{R_x(\theta_{(5,3)})} & \qw &
+\ldots & \\
+\lstick{$\ket{0}$} & \gate{R_x(\theta_{(1,4)})} & \gate{R_x(\theta_{(2,2)})}  &
+\gate{R_x(\theta_{(3,4)})} & \qw & \gate{R_x(\theta{(4,2)})} & \gate{R_x(\theta_{(5,4)})} & \qw &
+\ldots & \\ 
+\lstick{$\ket{0}$} & \gate{R_x(\theta_{(1,5)})} & \ctrl{1} &
+\gate{R_x(\theta_{(3,5)})} & \ctrl{2} & \qw & \gate{R_x(\theta_{(5,5)})} & \qw &
+\ldots & \\ 
+\lstick{$\ket{0}$} & \gate{R_x(\theta_{(1,6)})} & \gate{R_x(\theta_{(2,3)})}  &
+\gate{R_x(\theta_{(3,6)})} & \qw & \ctrl{2} & \gate{R_x(\theta_{(5,6)})} & \qw &
+\ldots & \\ 
+\lstick{$\ket{0}$} & \gate{R_x(\theta_{(1,7)})} & \ctrl{1} &
+\gate{R_x(\theta_{(3,7)})} & \gate{R_x(\theta{(4,3)})} & \qw & \gate{R_x(\theta_{(5,7)})} & \qw &
+\ldots & \\ 
+\lstick{$\ket{0}$} & \gate{R_x(\theta_{(1,8)})} & \gate{R_x(\theta_{(2,4)})}  &
+\gate{R_x(\theta_{(3,8)})} & \qw & \gate{R_x(\theta{(4,4)})} & \gate{R_x(\theta_{(5,8)})} & \qw &
+\ldots & \\
+\lstick{$\ket{0}$} & \gate{R_x(\theta_{(1,9)})} & \qw  &
+\gate{R_x(\theta_{(3,9)})} & \qw & \qw & \gate{R_x(\theta_{(5,9)})} & \qw &
+\ldots & \\
+\end{tikzcd}
+\caption{The butterfly circuit for 9 qubits. For each $j$-th power of $2$ that the
+  width of the circuit exceeds, the next layer is added that consist of $R_x$
+  gates on each qubit and controlled $R_x$ gate between $i$-th and $i+2^j$-th qubits (continued below).}
+\end{figure}
+\begin{figure}[htbp!] \ContinuedFloat
+\begin{tikzcd}
+  \lstick[wires=9]{$\psi$} & \ldots & \ctrl{4} & \qw & \qw &
+  \qw & \gate{R_x(\theta_{(7,1)})} & \ctrl{8} & \qw \\
+  & \ldots & \qw & \ctrl{4} & \qw & \qw  &
+  \gate{R_x(\theta_{(7,2)})} & \qw & \qw\\
+  & \ldots & \qw & \qw & \ctrl{4} & \qw &
+  \gate{R_x(\theta_{(7,3)})}  \qw & \qw & \qw\\
+  & \ldots & \qw & \qw & \qw & \ctrl{4}  &
+  \gate{R_x(\theta_{(7,4)})}  \qw & \qw & \qw\\
+  &  \ldots &\gate{R_x(\theta_{(6,1)})} & \qw & \qw & \qw &
+  \gate{R_x(\theta_{(7,5)})}  \qw & \qw & \qw\\
+  & \ldots & \qw & \gate{R_x(\theta_{(6,2)})}  & \qw & \qw &
+  \gate{R_x(\theta_{(7,6)})}  \qw & \qw & \qw\\
+  & \ldots & \qw & \qw & \gate{R_x(\theta_{(6,3)})} & \qw &
+  \gate{R_x(\theta_{(7,7)})}  \qw & \qw & \qw\\ 
+  &  \ldots &\qw & \qw & \qw & \gate{R_x(\theta_{(6,4)})}  &
+  \gate{R_x(\theta_{(7,8)})}  \qw & \qw & \qw\\
+  & \ldots & \qw & \qw & \qw & \qw &
+  \gate{R_x(\theta_{(7,9)})}  & \gate{R_x(\theta_{(8,1)})} & \qw \\
+\end{tikzcd}
+\caption{The butterfly circuit for 9 qubits. For each $j$-th power of $2$ that the
+    width of the circuit exceeds, the next layer is added that consist of $R_x$
+    gates on each qubit and controlled $R_x$ gate between $i$-th and $i+2^j$-th qubits }
+\end{figure}
 \chapter{WQGANs Additional Results}
 \label{apx:wqgans_pahse_results}
 \begin{figure}[htbp!]
