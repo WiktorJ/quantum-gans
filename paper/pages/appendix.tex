@@ -65,8 +65,33 @@ divergence is $0$ and the distributions $p_r$ and $p_q$ are equal. $\qed$
 \let\oldclearpage\clearpage
 \let\clearpage\relax
 \chapter{Circuits}
-\section{SQGANs Ansatz}
+\section{Generic Ansatz}
 \label{apx:sqgans_ansatz}
+\begin{figure}[htbp!]
+  \begin{tikzcd}
+    \qw &  \gate{R_x(\theta_{(x,1)}^{(i)})} & \gate{R_z(\theta_{(z,1)}^{(i)})} &
+    \gate[2, disable auto height]{R_{zz}(\theta_{(1,2)}^{(i)})} & \qw & \qw \\
+    \qw &  \gate{R_x(\theta_{(x,2)}^{(i)})} & \gate{R_z(\theta_{(z,2)}^{(i)})} &
+    \qw & \gate[2, disable auto height]{R_{zz}(\theta_{(2,3)}^{(i)})} & \qw \\
+    \qw &  \gate{R_x(\theta_{(x,3)}^{(i)})} & \gate{R_z(\theta_{(z,3)}^{(i)})} &
+    \gate[2, disable auto height]{R_{zz}(\theta_{(3,4)}^{(i)})} & \qw  & \qw \\ 
+    \qw &  \gate{R_x(\theta_{(x,4)}^{(i)})} & \gate{R_z(\theta_{(z,4)}^{(i)})} &
+    \qw & \vdots \\
+     & \vdots & \vdots & \vdots & \vdots & \\
+    \qw &  \gate{R_x(\theta_{(x,w-2)}^{(i)})} & \gate{R_z(\theta_{(z,w-2)}^{(i)})} &
+    \gate[2, disable auto height]{R_{zz}(\theta_{(w-2,w-1)}^{(i)})} & \vdots \\ 
+    \qw &  \gate{R_x(\theta_{(x,w-1)}^{(i)})} & \gate{R_z(\theta_{(z,w-2)}^{(i)})} &
+    \vdots & \gate[2, disable auto height]{R_{zz}(\theta_{(w-1,w)}^{(i)})} & \qw \\
+    \qw &  \gate{R_x(\theta_{(x,w)}^{(i)})} & \gate{R_z(\theta_{(z,w)}^{(i)})} &
+    \qw & \qw  & \qw
+  \end{tikzcd}
+  \caption{Single layer of the generic ansatz used for generator and
+    discriminator circuits \cite{Dallaire_Demers_2018}. Circuit parametrized by
+    vector $\theta$, where $i$ denotes the layer number and $w$ denotes the
+    width of the circuit.
+  }
+  \label{fig:phase_circuit_apx}
+\end{figure}
 \section{Topological Phase Transition Ansatz}
 \label{apx:topological_phase_transition_ansatz}
 \begin{figure}[htbp!]
@@ -120,8 +145,7 @@ Where
 \section{Butterfly Ansatz}
 \label{apx:butterfly_ansatz}
 
-\chapter{Additional Results}
-\section{WQGANs Results}
+\chapter{WQGANs Additional Results}
 \label{apx:wqgans_pahse_results}
 \begin{figure}[htbp!]
   \captionsetup[subfigure]{labelformat=empty}
@@ -145,15 +169,7 @@ Where
   \subfloat{
     \includegraphics[width=0.3\linewidth]{figures/wqgans_phase_size=8_k=3_gen=4/Wasserstein_Distance.png}
   }
-  \caption{The solid line represents the average value and the shaded area
-    represents the range from 5 different experiments. }
-  \label{fig:wqgans_phase_res_2}
-\end{figure}
 
-
-\begin{figure}[htbp!]
-  \captionsetup[subfigure]{labelformat=empty}
-  \centering
   \subfloat{
     \includegraphics[width=0.3\linewidth]{figures/wqgans_phase_size=6_k=3_gen=5/fidelity.png}
   }
@@ -173,8 +189,11 @@ Where
   \subfloat{
     \includegraphics[width=0.3\linewidth]{figures/wqgans_phase_size=8_k=3_gen=5/Wasserstein_Distance.png}
   }
-  \caption{The solid line represents the average value and the shaded area
-    represents the range from 5 different experiments. }
+  \caption{Results of topological phase transition estimation (ansatz Appendix \ref{apx:topological_phase_transition_ansatz}).
+    The solid line represents the average value and the shaded area
+    represents the range from 5 different experiments. First the
+    fidelity is shown and below the corresponding Wasserstein distance. In all the
+    experiments the generator is built using ansatz from \ref{apx:sqgans_ansatz}.}
   \label{fig:wqgans_phase_res_3}
 \end{figure}
 
@@ -201,15 +220,7 @@ Where
   \subfloat{
     \includegraphics[width=0.3\linewidth]{figures/wqgans_phase_size=8_k=4_gen=4/Wasserstein_Distance.png}
   }
-  \caption{The solid line represents the average value and the shaded area
-    represents the range from 5 different experiments. }
-  \label{fig:wqgans_phase_res_4}
-\end{figure}
-
-
-\begin{figure}[htbp!]
-  \captionsetup[subfigure]{labelformat=empty}
-  \centering
+  
   \subfloat{
     \includegraphics[width=0.3\linewidth]{figures/wqgans_phase_size=6_k=4_gen=5/fidelity.png}
   }
@@ -229,8 +240,11 @@ Where
   \subfloat{
     \includegraphics[width=0.3\linewidth]{figures/wqgans_phase_size=9_k=4_gen=5/Wasserstein_Distance.png}
   }
-  \caption{The solid line represents the average value and the shaded area
-    represents the range from 5 different experiments. }
+  \caption{Results of topological phase transition estimation (ansatz Appendix \ref{apx:topological_phase_transition_ansatz}).
+    The solid line represents the average value and the shaded area
+    represents the range from 5 different experiments. First the
+    fidelity is shown and below the corresponding Wasserstein distance. In all the
+    experiments the generator is built using ansatz from \ref{apx:sqgans_ansatz}.}
   \label{fig:wqgans_phase_res_5}
 \end{figure}
 \label{apx:wqgans_pahse_results_butterfly}
@@ -263,16 +277,7 @@ Where
   \subfloat{
     \includegraphics[width=0.25\linewidth]{figures/wqgans_butterfly_size=7_k=3_gen=4/Wasserstein_Distance.png}
   }
-  \caption{Results of butterfly circuit estimation (ansatz Appendix \ref{apx:butterfly_ansatz}).
-    The solid line represents the average value and the shaded area
-    represents the range from 5 different experiments. The upper row shows the
-    fidelity and the bottom row shows the corresponding Wasserstein distance. In all the
-    experiments the generator is built using ansatz from \ref{apx:sqgans_ansatz}.}
-  \label{fig:wqgans_res_butterfly_2}
-\end{figure}
-\begin{figure}[htbp!]
-  \captionsetup[subfigure]{labelformat=empty}
-  \centering
+
   \subfloat{
     \includegraphics[width=0.25\linewidth]{figures/wqgans_butterfly_size=5_k=4_gen=4/fidelity.png}
   }
@@ -300,8 +305,8 @@ Where
   }
   \caption{Results of butterfly circuit estimation (ansatz Appendix \ref{apx:butterfly_ansatz}).
     The solid line represents the average value and the shaded area
-    represents the range from 5 different experiments. The upper row shows the
-    fidelity and the bottom row shows the corresponding Wasserstein distance. In all the
+    represents the range from 5 different experiments. First the
+    fidelity is shown and below the corresponding Wasserstein distance. In all the
     experiments the generator is built using ansatz from \ref{apx:sqgans_ansatz}.}
   \label{fig:wqgans_res_butterfly_3}
 \end{figure}
