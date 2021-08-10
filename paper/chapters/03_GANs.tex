@@ -74,22 +74,22 @@ generator anymore.
 \section{Wasserstein Generative Adversarial Networks (WGANs)}
 One of the very prominent improvement to SGANs and a way to mitigate the
 vanishing gradient problem is changing the cost function to use Wasserstein
-Distance.
+Distance \cite{arjovsky2017wasserstein}.
 
-The Wasserstein Distance, also called Earth-Mover's Distance is a distance
+The Wasserstein Distance, also called Earth-Mover's (EM) Distance is a distance
 measure between two probability distributions. The name ``Earth Mover'' comes
 from the fact, that informally the distance can be described as follows: Given
 two probability distributions, if we imagine them as piles of dirt, the ``Earth
 Mover'' distance says what is the minimum cost of turning one pile of dirt into the
 other one. Where cost is the volume that has to be moved times the distance is
-has to be moved.
+has to be moved \cite{villani@optimal}.
 
 The main advantage of the Wasserstein Distance over Jensen–Shannon Divergence is,
 that even in the case of disjoint distribution we get meaningful, stable
 distance which is well suited for gradient based learning.
 
-Formally, the Wasserstein or Earth-Mover's Distance (EM Distance) is defined as
-follows:
+Formally, the Wasserstein or EM Distance, using Kantorovich formulation, is
+defined as follows \cite{villani@optimal}:
 
 \begin{equation}
   \label{eq:EMD}
@@ -98,7 +98,7 @@ follows:
 
 Where $\Pi(p_r, p_g)$ denotes the set of all possible joint distributions,
 $\gamma(x,y)$ says how much ``dirt'' has to be transported in order to transform
-$p_g$ into $p_r$. Since we take $\inf$, the EM Distance is then the cost of such
+the marginal distribution $p_g$ into the marginal distribution $p_r$. Since we take $\inf$, the EM Distance is then the cost of such
 transport done in the optimal way. 
 
 The computation in \ref{eq:EMD} is highly intractable, but according to

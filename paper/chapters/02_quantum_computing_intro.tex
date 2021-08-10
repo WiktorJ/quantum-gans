@@ -1,5 +1,5 @@
 \chapter{Quantum Computing Notation}\label{chapter:quantum_mechanic_introduction}
-\enlargethispage{\baselineskip}
+%\enlargethispage{\baselineskip}
 We use the standard bra-ket notation to represent vectors in complex
 $N$-dimensional Hilbert space $\mathbb{C}^N$, i.e.
 $\ket{\cdot} \in \mathbb{C}^N$ for column vector and $\bra{\cdot} \in
@@ -23,29 +23,29 @@ represented as a vector $\ket{\psi} \in \mathbb{C}^2$, such that $\ket{\psi} =
 \end{align*}
 We denote a pure quantum state as a tensor product of $n$ qubits, i.e.
 $\ket{\psi_1} \otimes \ldots \otimes \ket{\psi_n} = \ket{\psi_1 \ldots \psi_n} =
-\ket{\psi}^{\otimes n} \in
-\mathbb{C}^{2^n}$. For the simplicity of notation we often write
-$\ket{\psi}^{\otimes n} = \ket{\psi}$.
-
+\ket{\psi} \in
+\mathbb{C}^{2^n}$. 
 If some system is a mixture of several pure quantum states, we use density
 operator to describe it. The density operator $\rho$ is defined as $\rho =
 \sum_{i=1}^{k}p_i\ket{\psi_i}\bra{\psi_i}$, where $p_i$ is the probability of
 system being in state $\ket{\psi_i}$ and $\sum_{i=1}^kp_i = 1$.
 
-An observable is an Hermitian matrix $H \in \mathbb{C}^{2^n \otimes 2^n}$. We
+An observable is an Hermitian matrix $H \in \mathbb{C}^{2^n \times 2^n}$. We
 call $Tr[\rho H]$ the expected value of observable $H$ on state $\rho$, where
 $Tr$ is matrix trace operation. Since the quantum state $\rho$ cannot be directly
 observed, in practice quantum measurements \cite{10.5555/1972505} are used to
 estimate the $Tr[\rho H]$.
 
-An operator, or a quantum gate, is an Unitary matrix $U \in \mathbb{C}^{2^n
-  \otimes 2^n}$. The operators are used to describe a transition from one
+An operator, or a quantum gate, is an unitary matrix $U \in \mathbb{C}^{2^n
+  \times 2^n}$. The operators are used to describe a transition from one
 quantum state to another, i.e. $\ket{\psi'} = U\ket{\psi}$.
 Similarly to the quantum states, operators may be stated as a tensor
-product of $2 \times 2$ Hermitian matrices, i.e. $H = H_1 \otimes \ldots \otimes
-H_n \in \mathbb{C}^{2^n \otimes 2^n}$. For the simplicity of notation we skip the
-identity matrices in the tensor product notation, e.g. $H_1 \otimes I \otimes H_3
-\otimes I \otimes I \otimes H_6 = H_1 \otimes H_3 \otimes H_6$.
+product of $2 \times 2$ Hermitian matrices, i.e. $H = H_1^{(1)} \otimes \ldots \otimes
+H_n^{(n)} \in \mathbb{C}^{2^n \times 2^n}$. For the simplicity of notation we skip the
+identity matrices in the tensor product notation, e.g. $H_1^{(1)} \otimes I_2 \otimes H_3^{(2)}
+\otimes I_4 \otimes I_5 \otimes H_6^{(3)} = H_1^{(1)} \otimes H_3^{(2)} \otimes
+H_6^{(3)}$. Where by convention the subscript indicates on which qubit the
+operator acts and the superscript indicates different $2\times 2$ matrix.
 
 In context of this work, particularly important are 3 Pauli Matrices:
 \begin{align*}
@@ -63,7 +63,7 @@ In context of this work, particularly important are 3 Pauli Matrices:
   \end{pmatrix}.
 \end{align*}
 
-Those matrices are Hermitian and Unitary, which means they can be used as
+Those matrices are Hermitian and unitary, which means they can be used as
 observables and operators. We refer to tensor product of several Pauli Matrices
 as Pauli String. We also use the Pauli Matrices to define basic parametrized gates
 $R_{\sigma}(\theta) = e^{-i\theta \sigma / 2}$, where $\sigma \in \{X, Y, Z\}$
@@ -79,10 +79,19 @@ to the circuit \ref{fig:small_circuit}.
   \begin{tikzcd}
     \lstick{$\ket{\psi}$} & \gate{U_1} & \qw & \ldots && \gate{U_k} & \qw && \lstick{\ket{\psi'}}
   \end{tikzcd}
-  \label{fig:small_circuit}
+  \caption{\label{fig:small_circuit}}
 \end{figure}
 If any of the gates $U$ is parametrized, we call this such circuit a
-parametrized quantum circuit. For further details about the notation and quantum
+parametrized quantum circuit.
+
+As a measure of similarity of quantum state we use quantum fidelity defined as
+\begin{equation*}
+  F(\rho, \sigma) = \left(Tr[\sqrt{\sqrt{\rho}\sigma\sqrt{\rho}}] \right)^2.
+\end{equation*}
+While not obvious from the equation, this measure is symmetric, i.e. $F(\rho,
+\sigma) = F(\sigma, \rho)$.
+
+For further details about the notation and quantum
 computing in general, please refer to the book \cite{10.5555/1972505}.
 
 

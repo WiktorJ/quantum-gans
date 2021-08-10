@@ -53,7 +53,7 @@ work is described in details in Appendix \ref{apx:sqgans_ansatz}.
     \rstick{Label R/G} &&&&&& \rstick{$\ket{\lambda}$} &&& \qw & \qw & \qw & \qw \\ 
     \rstick{Batch R/G} &&&&&& \rstick{$\ket{z}$} &&& \qw & \qw & \qw & \qw 
   \end{tikzcd}
-  \caption{SQGANs schema. The discriminator $D$ and the generator $G$ are
+  \caption{SQGANs architecture. The discriminator $D$ and the generator $G$ are
     parametric quantum circuits. The first 3 wires go
     directly to the discriminator. \textbf{Out D} outputs the probability of the
   input being generated. \textbf{Batch D} is an additional workspace of the
@@ -146,11 +146,13 @@ In all the experiment we use Adam optimizer \cite{kingma2017adam} with
 parameters $\beta_1 = 0.9$, $\beta_2=0.98$, $\hat{\epsilon} = 1e-9$. The
 learning rate is calculated as
 \begin{equation}
-lr = \max{(\exp{(-\frac{(k+200) * \ln{100}}{4000}), 0.01)}}
+lr = \max{(\exp{(-\frac{(k+200) \cdot \ln{100}}{4000}), 0.01)}}
 \end{equation}
 where $k$ is the optimization step number. The
 learning rate decreases from $\sim 0.8$ to $0.01$ in the first $3800$ steps and then
-remains at $0.01$ for the rest of the training. The exact values were derived
+remains at $0.01$ for the rest of the training. This formula is an adjusted
+version of the exponentially decreasing learning rate used in
+\cite{Dallaire_Demers_2018}, the exact values were derived
 experimentally and show overall good convergence. The exact number of epochs and
 iterations is specified for each experiment separately.
 \subsubsection{Results For Pure State Real Input}
@@ -159,12 +161,27 @@ The real input state is generated using circuit from Figure
 \ref{fig:phase_circuit_small} for random $g \in [-1; 1]$.
 
 
-In Figure \ref{fig:sqgans_res_3} we present the
-results of experiments for different widths of the real input circuit. For All
-the experiments, the generator and discriminator were built using ansatz
-from Appendix \ref{apx:sqgans_ansatz} for each layer. The \textbf{Label} and
-\textbf{Batch} wires are not used for any circuit.
+\begin{figure}[htbp!]
+  \begin{tikzcd}
+    \rstick{Out D} &&&&&& \rstick{$\ket{0}$} &&& \qw & \qw & \gate[2, disable auto height]{D(\theta_D)} & \meter{} \\
+    \rstick{Out R/G} &&&&&& \rstick{$\ket{0}^{\otimes n}$} &&& \gate{
+      \begin{array}{c}
+      R \\ or \\ G(\theta_G)
+      \end{array}
+    } & \qw \rho_{\lambda}^{R/G} & & \qw \\ 
+  \end{tikzcd}
+  \caption{Simplified SQGANs architecture from Figure \ref{fig:SQGANs_circuit}. \textbf{Label} and
+    \textbf{Batch} wires are removed. This design was used for pure state
+    generation. \label{fig:SQGANs_circuit_simple}}
+\end{figure}
 
+For All
+the experiments, generator and discriminator were built using ansatz
+from Appendix \ref{apx:sqgans_ansatz} for each layer and simplified architecture
+from Figure \ref{fig:SQGANs_circuit_simple} was used.
+
+In Figure \ref{fig:sqgans_res_3} we present the
+results of experiments for different widths of the real input circuit. 
 For each real input width the generator was able to approximate the real source,
 increasing the fidelity as the training progressed. The training was
 harder for the bigger real source circuits and it can be clearly seen that
@@ -205,10 +222,10 @@ in the real source are not longer useful for the real source approximation.
     \includegraphics[width=0.3\linewidth]{figures/sqgans_size=3/probability_real_as_real.png}
   }
   \subfloat{
-    \includegraphics[width=0.3\linewidth]{figures/sqgans_size=5/probability_real_as_real.png}
+    \includegraphics[width=0.3\linewidth]{figures/sqgans_size=4/probability_real_as_real.png}
   }
   \subfloat{
-    \includegraphics[width=0.3\linewidth]{figures/sqgans_size=4/probability_real_as_real.png}
+    \includegraphics[width=0.3\linewidth]{figures/sqgans_size=5/probability_real_as_real.png}
   }
   \caption{The solid line represents the average value and the shaded area
     represents the range from 5 different experiments. The first row shows the fidelity
@@ -286,6 +303,7 @@ Where $\mathcal{O}_n$ is a set of all $2^n \times 2^n$ Hermitian matrices and
 $\norm{H}_L$ is the quantum Lipschitz constant of the matrix $H$ defined as:
 \begin{equation}
   \norm{H}_L = 2 \max_{i=1\ldots n}{\min_{H_{\bar{i} \in \mathcal{O}_n}}{(\norm{H - H_{\bar{i}}}_\infty)}}.
+  \label{eq:quantum_lipschitz_constant}
 \end{equation}
 Where $H_{\bar{i}}$ is a Hermitian matrix that does not act on the $i$-th qubit.
 The quantum Lipschitz constant and the Wasserstein distance defined in this way,
@@ -328,45 +346,47 @@ differs significantly. Here we use the architecture proposed by Kiani et. al
 program, while the generator is similar to the one from SQGANs.
 
 \subsubsection{Discriminator}
-The set $\mathcal{O}_n$ in Equation \ref{eq:w1_distance_general} is too big to
-be useful in any practical scenarios. Instead the set of parametrized k-length
-Pauli String is used. Specifically,
+In practice, one has to restrict set $\mathcal{O}_n$ in Equation
+\ref{eq:w1_distance_general} to make the computation feasible.
+As proposed in \cite{kiani2021quantum} the set of parametrized k-length Pauli
+String is used. Specifically, let
 \begin{equation}
 \begin{split}
   \label{eq:parametrized_hamiltonian}
   H(W) = & \sum_{i_1 = 1}^{n-k+1} \ldots \sum_{i_k = i_{k-1} + 1}^{n}\sum_{\sigma_1, \ldots, \sigma_k \in \{I, X, Y, Z\}} w^{\sigma_1,
     \ldots, \sigma_k}_{(i_1, \ldots, i_k)} \sigma^1_{i_1} \otimes \ldots \otimes \sigma^k_{i_k}  = \\
-  & = \sum_{\mathcal{I}_k \subseteq \{1, \ldots, n \}} \sum_{H \in \{ I,X,Y,Z \}^{\otimes k}} w_{\mathcal{I}_k}^HH_{\mathcal{I}_k}
+  & = \sum_{\mathcal{I}_k \subseteq \{1, \ldots, n \}} \sum_{H \in \{ I,X,Y,Z \}^{\otimes k}} w_{\mathcal{I}_k}^HH_{\mathcal{I}_k},
 \end{split}
 \end{equation}
-Where $\mathcal{I}_k$ is a k-set of qubit indexes used to generate the k-lenght
+where $\mathcal{I}_k$ is a k-set of qubit indexes used to generate the k-length
 Pauli String, $H_{\mathcal{I}_k}$ is n-length Pauli String that acts non
 trivially on the set of at the most k qubits
 corresponding to $\mathcal{I}_k$ and $W$ is the set of all weights.
 
-We can also use the fact that the quantum Lipschitz constant of $H(W)$ is
-bounded by:
+Now, the quantum Lipschitz constant \eqref{eq:quantum_lipschitz_constant} of $H(W)$ is bounded by:
 \begin{equation}
   \label{eq:quantum_lipschitz_bound}
   \norm{H(W)}_L \leq 2 \max_{i = 1,\ldots,n}{\norm{\sum_{\{ \mathcal{I}_k: \mathcal{I}_k \subseteq \{1, \ldots, n \} \land i \in \mathcal{I}_k \}}
       \sum_{\substack{H \in \{ I,X,Y,Z \}^{\otimes k} \\
-        H_{(i)} \neq I
+        H_{i} \neq I
       }} w_{\mathcal{I}_k}^HH_{\mathcal{I}_k} }_{\infty}}.
 \end{equation}
 Where the sum is taken only over the operators which act non-trivially on qubit
-$i$\cite{kiani2021quantum}. 
+$i$ \cite{kiani2021quantum}. 
 
 To simplify the notation, the parameter set $W$ is enumerated as $W=\{w_1,
   \ldots, w_N\}$, where $N=|W|$ and $H_i$, $\mathcal{I}_{k_i}$ are Hamiltonian and index set
 associated with the weight $w_i$.
 
-Now, the equation \ref{eq:w1_distance_general} takes the form: 
+Now, the Equation \eqref{eq:w1_distance_general} takes the form as in Equation
+\eqref{eq:quantum_wasserstein_parametrized}, where the optimization goes over
+weights $w$ instead of the Hamiltonian set $\mathcal{O}_n$.
 \begin{equation}
   \label{eq:quantum_wasserstein_parametrized}
   W_1(\rho, \sigma) = \max_{w}{(Tr[(\rho - \sigma)\sum_{i=1}^N w_iH_i])}
 \end{equation}
 with the following constraint steaming from the quantum Lipschitz constant bound
-from Equation \ref{eq:quantum_lipschitz_bound}.
+from Equation \eqref{eq:quantum_lipschitz_bound}.
 \begin{equation}
   \label{eq:absolute_value_constraint}
 \sum_{\{i: i \in \{1,\ldots, n\} \land j \in \mathcal{I}_{k_i} \}} |w_i| \leq 1, \qquad j=1,\ldots,n
@@ -435,7 +455,7 @@ to train the generator in the typical minmax game of GANs.
 \subsubsection{Generator}
 Similarly to SQGANs, the generator is built using parametrized quantum circuits.
 Specifically, the generator is defined as a sum of parametrized quantum circuits
-with corresponding probabilities:
+with corresponding probabilities (which can be interpreted as a quantum channel):
 \begin{equation}
 G(\theta) = \sum_{i=1}^r p_iG_i(\theta_i)\rho_0G_i(\theta_i)^\dagger.
 \end{equation}
@@ -457,7 +477,7 @@ We also always set the initial state $\rho_0 = \ket{0}$.
 
 In the end the generator becomes:
 \begin{equation}
-  G(\theta) = \sum_{i=1}^r p_i\bar{G}(\theta_i)\ket{0}\bar{G}(\theta_i)^\dagger.
+  G(\theta) = \sum_{i=1}^r p_i\bar{G}(\theta_i)\bra{0}\ket{0}\bar{G}(\theta_i)^\dagger.
 \end{equation}
 
 

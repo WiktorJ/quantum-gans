@@ -452,7 +452,7 @@ for meta_dict in [
     # size_7_ids_wqgans_butterfly_k_2_gen_4_same,
     # size_8_ids_wqgans_butterfly_k_2_gen_4_same,
     # size_9_ids_wqgans_butterfly_k_2_gen_4_same,
-    # size_10_ids_wqgans_butterfly_k_3_gen_4_same,
+    size_10_ids_wqgans_butterfly_k_3_gen_4_same,
     # size_8_ids_wqgans_phase_k_4_gen_4_interpolation,
     # size_8_ids_wqgans_phase_k_4_gen_5_interpolation,
     # size_4_ids_wqgans_butterfly_k_2_gen_same_gans,
@@ -514,16 +514,16 @@ def plot_metric(metric, data_name, color, sub_title, ylim):
     ax.plot(list(range(len(metric[0]))), mean, c=color)
     ax.fill_between(list(range(len(metric[0]))), mi, ma, alpha=0.3, facecolor=color)
     # ax.fill_between(list(range(len(metric[0]))), mean - std, mean + std, alpha=0.3, facecolor=color)
-    ax.set_xlabel("epoch", fontsize=18)
-    ax.set_ylabel(data_name, fontsize=18)
+    ax.set_xlabel("epoch", fontsize=20)
+    ax.set_ylabel(data_name, fontsize=20)
     ax.set_ylim(ylim[0], ylim[1])
-    fig.suptitle(sub_title)
+    fig.suptitle(sub_title, fontsize=18)
     plt.show()
     return fig
 
 
-project = 'thesis-em-exps'
-# project = 'thesis-em2'
+# project = 'thesis-em-exps'
+project = 'thesis-em2'
 # prefix_to_metrics_metadata = metadata_per_project['thesis']
 prefix_to_metrics_metadata = metadata_per_project[project]
 for meta in metadata:

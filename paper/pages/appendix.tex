@@ -93,6 +93,9 @@ divergence is $0$ and the distributions $p_r$ and $p_q$ are equal. $\qed$
   \label{fig:phase_circuit_apx}
 \end{figure}
 \section{Topological Phase Transition Ansatz}
+This circuit was used by Smith et al. \cite{smith2020crossing} to study
+transitions between different states of matter. It is essentially a matrix
+product state (MPS) stated in the quantum circuit form.
 \label{apx:topological_phase_transition_ansatz}
 \begin{figure}[htbp!]
   \begin{tikzcd}
@@ -369,6 +372,18 @@ Where
   \label{fig:wqgans_res_butterfly_3}
 \end{figure}
 \let\clearpage\oldclearpage
+\chapter{Code and Technologies}
+All the code used for this work is available on public github repository:
+\url{https://github.com/WiktorJ/quantum-gans}.
+
+The quantum circuits were implemented using Cirq
+\cite{https://doi.org/10.5281/zenodo.5138274} and evaluated using Tensorflow
+Quantum \cite{broughton2020tensorflow}. The optimization of the classical and
+quantum networks was performed using optimizers from Tensorflow library \cite{tensorflow2015-whitepaper}.
+
+All the quantum circuits schematics were drawn using Quantikz \cite{https://doi.org/10.17637/rh.7000520}.
+
+
 % \section{Example 1}
 % \cmark
 % \section{Example 2}
