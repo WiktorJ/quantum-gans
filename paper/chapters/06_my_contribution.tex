@@ -6,36 +6,36 @@ chapter we propose the hybrid classical-quantum framework that can overcome this
 
 Our idea is based WQGANs and how the quantum Wasserstein distance is
 approximated during the training. The discriminator at every step approximates
-the distance between some fixed, real input state and the generated state which
+the distance between some fixed, target state and the generated state which
 changes after each iteration. However, the discriminator never needs an access to
-the actual real input state, it only operates on the set of measured
+the actual target state, it only operates on the set of measured
 expectations. 
 
 Given a parametrized circuits $U$
-and set of parameters $\Theta = \{\theta_i\}$ and a set of operators $H =
-\{H_j\}$, we prepare a set of vectors of expectations $S$. Each vector $s_{\theta_i}
+and a set of parameters $\Theta = \{\theta_i\}$ and a set of operators $H =
+\{H_j\}$, we prepare the set of vectors of expectations $S$. Each vector $s_{\theta_i}
 \in S$ contains the expectations of the circuit $U(\theta_i)$, such that
 $s_{\theta_i}^{(j)} = \langle H_j \rangle_{U(\theta_i)} $.
 
 Assuming that all the vectors in $S$ come from the same distribution $p_S$,
 the proposed framework is defined in two parts as follows:
 \begin{enumerate}
-\item \textit{Classical}: Takes as the input set $S$ and uses it to learn a function $f:
+\item \textit{Classical}: Takes as the input the set $S$ and uses it to learn the function $f:
   \mathbb{R}^{n} \to \mathbb{R}^{|H|}$. Given an arbitrary vector $g \in
   \mathbb{R}^n$ (e.g. random noise), this function produces a new vector $s' =
   f(g)$ such that $s' \sim p_S$.  
 \item \textit{Quantum}: Takes $s'$ as the input and uses it as
-  expectations of real input source in the WQGANs setting described in the
+  the expectations of target state in the WQGANs setting described in the
   previous chapter. The generator trained using $s'$ produces new, unseen before
   quantum state. The WQGANs optimization objective from Equation
-  \ref{eq:wqgans_optimization_objective} becomes:
+  \eqref{eq:wqgans_optimization_objective} becomes:
   \begin{equation}
     \max_{w}{\min_{\theta}{\mathcal{L}(w, \theta)}} = \max_{w}{\min_{\theta}{(\sum_{i=1}^Nw_i(s^{\prime(i)} - Tr[G(\theta)H_i]))}} 
     \label{eq:wqgans_optimization_objective_unseen}
   \end{equation}
 \end{enumerate}
 
-Once the function $f$ is learnt, it can be used arbitrary many times to produce
+Once the function $f$ is learned, it can be used arbitrary many times to produce
 new vectors of expectations.
 With those vectors, it is possible to generate new quantum states that come from
 some circuit $U(\theta')$, without ever knowing $U$ or $\theta'$.
@@ -67,11 +67,11 @@ this circuit can be described by three functions $\theta_v, \theta_w, \theta_r$
 over $V = [-1; 1]$. To prepare the input to the classical part 
  $m$ ($m = |S|$) values of $g \in V$ are sampled and the expectations of $U(\theta_v(g_i),
 \theta_w(g_i), \theta_r(g_i))\ \forall_{i=1,\ldots,m}$ are calculated for all operators $H_i
-\in H$. Similarly as in the WQGANs chapter, $H$ is chosen to be a
+\in H$. Similarly as in the WQGANs chapter, $H$ is chosen to be the
 set of all k-length Pauli Strings.
 This data is used to interpolate the expectation functions for those operators.  
 
-In Figure \ref{fig:phase_exps} interpolated expectations of the circuit for
+In Figure \ref{fig:phase_exps} the interpolated expectations of the circuit for
 $k=3$ and $m=11$ are plotted (only subset of the expectation is plotted for readability).
 
 \begin{figure}[htbp!]
@@ -90,11 +90,11 @@ $k=3$ and $m=11$ are plotted (only subset of the expectation is plotted for read
 
 The interpolated expectations are used to learn the quantum states for
 the values of $g$ that were not part of the classical input. In Figure
-\ref{fig:wqgans_res_interpolated_1} we see fidelity and Wasserstein distance
-between the real input states and the ones learnt using the interpolated
+\ref{fig:wqgans_res_interpolated_1} we see fidelity and the Wasserstein distance
+between the target states and the ones learned using the interpolated
 expectations.
 Those results are comparable with the ones obtained by learning from known
-expectations (Figure \ref{fig:wqgans_res_1}).
+expectations (in Figure \ref{fig:wqgans_res_1}).
 
 \begin{figure}[htbp!]
   \captionsetup[subfigure]{labelformat=empty}
@@ -124,19 +124,18 @@ expectations (Figure \ref{fig:wqgans_res_1}).
   \subfloat{
     \includegraphics[width=0.25\linewidth]{figures/wqgans_phase_size=8_k=4_gen=5_interpolation/Wasserstein_Distance.png}
   }
-  \caption{Results for topological phase transition circuit (ansatz Appendix
-    \ref{apx:topological_phase_transition_ansatz}) using interpolated expectations.
+  \caption{Results for the interpolated expectations of the topological phase transition circuit (Appendix
+    \ref{apx:topological_phase_transition_ansatz}) and the generator built 
+    with the generic circuit (Appendix \ref{apx:sqgans_ansatz}).
     The solid line represents the average value and the shaded area
     represents the range from 5 different experiments. The upper row shows the
-    fidelity and the bottom row shows the corresponding Wasserstein distance. In all the
-    experiments the generator is built using ansatz from Appendix
-    \ref{apx:sqgans_ansatz}. }
+    fidelity and the bottom row shows the corresponding Wasserstein distance. }
   \label{fig:wqgans_res_interpolated_1}
 \end{figure}
 
 \subsubsection{String Order Parameters}
 
-In their work Smith et. al\cite{smith2020crossing} define two
+In their work Smith et. al \cite{smith2020crossing} define two
 string order parameters
 \begin{equation}
 \begin{split}
@@ -147,7 +146,7 @@ S^{ZY} =  & \bra{\psi}Z_2Y_3(\prod_{i=4}^{N-3}X_i)Y_{N-2}Z_{N-1}\ket{\psi},
 where $N$ is the width of the circuit and $\ket{\psi}$ is the final state
 obtained by the topological phase transition circuit from Appendix
 \ref{apx:topological_phase_transition_ansatz}.
-The measurements of $S^{\mathbb{1}}$ and $S^{ZY}$ on states learnt using the
+The measurements of $S^{\mathbb{1}}$ and $S^{ZY}$ on states learned using the
 interpolated expectations are shown in Figure \ref{fig:string_order_1}. The
 obtained results closely follow the expected value and the phase transition
 point at $g=0$ is clearly distinguishable.
@@ -161,9 +160,10 @@ point at $g=0$ is clearly distinguishable.
   \subfloat{
     \includegraphics[width=0.5\linewidth]{figures/string_order_szy/plot.png}
   }
+
   \caption{String order parameters $S^\mathbb{1}$ and $S^{ZY}$ measured on the
     generic generator from Appendix \ref{apx:sqgans_ansatz}, trained using the
-    interpolated expectations, for different width of circuit $N$.
+    interpolated expectations, for different width of the circuit $N$.
     The phase transition at $g=0$ is clearly visible,
     the results are very close to the exact ones.}
 \label{fig:string_order_1}
@@ -172,11 +172,11 @@ point at $g=0$ is clearly distinguishable.
 \subsection{Conclusions}
 Using the interpolated expectations allows to learn unknown quantum states.
 In all the experiments generic generator ansatz was used, meaning that also the
-design of $U$ and its parametrization was unknown to the quantum Generator and
-Discriminator.
+design of $U$ and its parametrization was unknown to the quantum generator and
+discriminator.
 
 Although the setup described here assumes one dimensional variable $g$, this
-notion can be extended to multi-variable case where $g \in V \subseteq
+notion can be extended to a multi-variable case where $g \in V \subseteq
 \mathbb{R}^m$.
 
 
@@ -187,28 +187,28 @@ more powerful tools are need to find the function $f$. However, following the as
 that all vectors in input set $S$ come from the same distribution $p_S$, we can use
 the generative modeling to learn the function $f$. In particular, here we use
 classical Wasserstein Generative Adversarial Networks (WGANs) to approximate the
-distribution $p_S$ and later use the classical Generator as the function $f$ to
+distribution $p_S$ and later use the classical generator as the function $f$ to
 produce the vectors $s'$. 
 
 \subsection{Evaluation Results}
-We use this technique to generate new, previously unseen states from butterfly circuit
+We use this technique to generate new, previously unseen states from the butterfly circuit
 (Appendix \ref{apx:butterfly_ansatz}). First, we generate the set $S$ and use it
-to train a simple WGAN-GP \cite{gulrajani2017improved}, with penalty factor
+to train a simple WGAN-GP \cite{gulrajani2017improved}, with the penalty factor
 $10$. We use simple 2-layers deep neural network (DNN), with input dimension $16$ and
-layer dimensions $64$ and $128$, for both, generator and
+with layer dimensions $64$ and $128$, for both, generator and
 discriminator. We use Adam optimizer \cite{kingma2017adam} with the following
-parameters $\beta_1 = 0.9$, $\beta_2 = 0.999$, $\hat{\epsilon} = 1e - 7$ and
+parameters $\beta_1 = 0.9$, $\beta_2 = 0.999$, $\hat{\epsilon} = 1e - 7$ and the
 learning rate of $0.001$. 
 
 For the states generated in this way, it is not possible to calculate the fidelity, so we
-relay on Wasserstein distance to evaluate the results. As shown in the previous
-chapter, the decrease in Wasserstein distance is strongly correlated with
+relay on the Wasserstein distance to evaluate the results. As shown in the previous
+chapter, the decrease in the Wasserstein distance is strongly correlated with
 the increase in fidelity. In Figure \ref{fig:wqgans_res_gans_1} results for
-several different sizes of real input are presented. We use generator with the
-same architecture as the real input source, to see whether the expectations
-generated by classical GANs could be measured from the real input circuit.
-Wasserstein distance very quickly drops below $1$, which should correspond to
-fidelity of more than $0.8$ based on the previous observations. However, it
+several different sizes of the target states are presented. We use the generator with the
+same architecture as the target circuit, to see whether the expectations
+generated by the classical GANs could be measured from the target circuit.
+The Wasserstein distance very quickly drops below $1$, which should correspond to
+the fidelity of more than $0.8$ based on the previous observations. However, it
 always plateaus before dropping to 0, which indicated that the classical
 generator does not produce expectations exactly from the $p_S$ distribution.
 
@@ -216,20 +216,20 @@ generator does not produce expectations exactly from the $p_S$ distribution.
   \captionsetup[subfigure]{labelformat=empty}
   \centering
   \subfloat{
-    \includegraphics[width=0.33\linewidth]{figures/wqgans_butterfly_size=4_k=2_gen=same_as_real_gan/Wasserstein_Distance.png}
+    \includegraphics[width=0.33\linewidth]{figures/wqgans_butterfly_size=4_k=2_gen=None_gan/Wasserstein_Distance.png}
   }
   \subfloat{
-    \includegraphics[width=0.33\linewidth]{figures/wqgans_butterfly_size=6_k=2_gen=same_as_real_gan/Wasserstein_Distance.png}
+    \includegraphics[width=0.33\linewidth]{figures/wqgans_butterfly_size=6_k=2_gen=None_gan/Wasserstein_Distance.png}
   }
   \subfloat{
-    \includegraphics[width=0.33\linewidth]{figures/wqgans_butterfly_size=8_k=2_gen=same_as_real_gan/Wasserstein_Distance.png}
+    \includegraphics[width=0.33\linewidth]{figures/wqgans_butterfly_size=8_k=2_gen=None_gan/Wasserstein_Distance.png}
   }
-  \caption{Wasserstein Distance for butterfly circuit (ansatz Appendix
-    \ref{apx:butterfly_ansatz}) using expectations generated with GANs. Results
+  \caption{Wasserstein Distance for the expectations of the butterfly circuit
+    (Appendix \ref{apx:butterfly_ansatz}) generated with GANs and the generator
+    build with the same butterfly circuit. Results
     for training set size $|S| = 256$ for $k=4,6$ and $|S| = 512$ for $k=8$. 
     The solid line represents the average value and the shaded area
-    represents the range from 5 different experiments. In all the
-    experiments the generator is built using the same butterfly circuit.
+    represents the range from 5 different experiments. 
     \ref{apx:sqgans_ansatz}. }
   \label{fig:wqgans_res_gans_1}
 \end{figure}
@@ -239,8 +239,8 @@ We have demonstrated the ability to generate unseen quantum state, with the
 expectations generated by classical GANs. Despite using basic and shallow DNN
 for the classical generator and discriminator, the generated expectations were
 very close to the ones measured from the generated quantum state as indicated by
-measured Wasserstein distance. Using more sophisticated or deeper architecture
-for classical GANs could yield better results or decrease the required training
+the measured Wasserstein distance. Using more sophisticated or deeper architecture
+for the classical GANs could yield a better results or decrease the required training
 size and is an interesting direction for the further research. 
 
 %%% Local Variables:

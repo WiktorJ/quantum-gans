@@ -1,11 +1,11 @@
 \chapter{Quantum Generative Adversarial Networks}\label{chapter:quantum_gans}
 The field of Quantum Machine Learning (QML) is still in a very early stage and there
-has been an ongoing effort on translating the  classical Machine Learning (ML)
-concepts into QML realm. Because of the limitations of current quantum computers
+has been an ongoing effort on translating the classical Machine Learning (ML)
+concepts into the QML realm. Because of the limitations of the current quantum computers
 (NISQ) \cite{bharti2021noisy} and overall different paradigm of Quantum
 Computing (QC), this process is difficult and there is no clear
 answer to the question ``how this concept should be realized on QC device?''.
-While in classical GANs generator and discriminator are realized as deep neural
+While in classical GANs the generator and the discriminator are realized as deep neural
 networks, NISQ devices are not yet powerful enough to support such architecture.
 Instead parametric quantum circuits \cite{Schuld_2020} are used.
 
@@ -15,27 +15,27 @@ The quantum GANs introduced in this chapter are the base of our hybrid
 classical-quantum generative framework, about which we talk in Chapter \ref{chapter:my_contribution}.
 
 \section{Standard Quantum GANs (SQGANs)}
-In the classical GANs, both the discriminator and generator are deep, general
+In classical GANs, both the discriminator and the generator are deep, general
 purpose neural networks. The logical extension of this design in the quantum
 realm is to model those as general purpose parametric quantum circuits. This
 idea was formalized by Dallaire-Demers et al. \cite{Dallaire_Demers_2018} in
 the architecture we call SQGANs (Figure \ref{fig:SQGANs_circuit}). The generator
-starts in the state $\ket{0}^{\otimes n}$ in the \textbf{Our R/G} wire, where
-$n$ is the dimension of the real quantum samples.
+starts in the state $\ket{0}^{\otimes n}$ in the \textbf{Out T/G} wire, where
+$n$ is the dimension of the target quantum state that the generator is trying to learn.
 Additionally, the generator takes the label state $\ket{\lambda}$ in the
-\textbf{Label R/G} wire and the random state $\ket{z}$ that provides the entropy in
-the \textbf{Batch R/G} wire. The label state $\ket{\lambda}$ lets the
+\textbf{Label T/G} wire and the random state $\ket{z}$ that provides the entropy in
+the \textbf{Batch T/G} wire. The label state $\ket{\lambda}$ allows the
 generator to learn the conditional distribution $p_g(x|\lambda)$ instead of $p_g(x)$,
-this design was inspired by classical Conditional GANs
+this design was inspired by the classical Conditional GANs
 \cite{mirza2014conditional}. The discriminator takes the generated state
-$\rho_\lambda^G$ or real state $\rho_\lambda^R$ and the corresponding label
+$\rho_\lambda^G$ or the target state $\rho_\lambda^T$ and the corresponding label
 $\ket{\lambda}$ in the \textbf{Label D} wire, it also uses the workspace
-\textbf{Batch D} initialized in $\ket{0}$ state. The measurement on the single
+\textbf{Batch D} initialized in the $\ket{0}$ state. The measurement on the single
 qubit wire \textbf{Out D} corresponds to the probability of the state in 
-\textbf{Out R/G} being real or generated.
+\textbf{Out T/G} being target or generated.
 
 There are not any particular restrains on how $G$ and $D$ circuits should look
-like. However, to be able to learn and differentiate between arbitrary quantum
+like. However, to be able to learn and differentiate between the arbitrary quantum
 states the ansatz used should be universal (i.e. be able to generate every
 quantum state given the appropriate depth). The ansatz used in this
 work is described in details in Appendix \ref{apx:sqgans_ansatz}.
@@ -45,63 +45,63 @@ work is described in details in Appendix \ref{apx:sqgans_ansatz}.
     \rstick{Out D} &&&&&& \rstick{$\ket{0}$} &&& \qw & \qw & \gate[4, disable auto height]{D(\theta_D)} & \meter{} \\
     \rstick{Batch D} &&&&&& \rstick{$\ket{0}^{\otimes d}$} &&& \qw & \qw & & \qw \\
     \rstick{Label D} &&&&&& \rstick{$\ket{\lambda}$} &&& \qw & \qw & & \qw \\ 
-    \rstick{Out R/G} &&&&&& \rstick{$\ket{0}^{\otimes n}$} &&& \gate[3, disable auto height]{
+    \rstick{Out T/G} &&&&&& \rstick{$\ket{0}^{\otimes n}$} &&& \gate[3, disable auto height]{
       \begin{array}{c}
-      R \\ or \\ G(\theta_G)
+      T \\ or \\ G(\theta_G)
       \end{array}
-    } & \qw \rho_{\lambda}^{R/G} & & \qw \\ 
-    \rstick{Label R/G} &&&&&& \rstick{$\ket{\lambda}$} &&& \qw & \qw & \qw & \qw \\ 
-    \rstick{Batch R/G} &&&&&& \rstick{$\ket{z}$} &&& \qw & \qw & \qw & \qw 
+    } & \qw \rho_{\lambda}^{T/G} & & \qw \\ 
+    \rstick{Label T/G} &&&&&& \rstick{$\ket{\lambda}$} &&& \qw & \qw & \qw & \qw \\ 
+    \rstick{Batch T/G} &&&&&& \rstick{$\ket{z}$} &&& \qw & \qw & \qw & \qw 
   \end{tikzcd}
   \caption{SQGANs architecture. The discriminator $D$ and the generator $G$ are
     parametric quantum circuits. The first 3 wires go
     directly to the discriminator. \textbf{Out D} outputs the probability of the
   input being generated. \textbf{Batch D} is an additional workspace of the
-  discriminator and \textbf{Label D} contains the label state. \textbf{Out R/G}
-  carries the generated or real state. \textbf{Label R/G} contains the label
-  state and \textbf{Batch R/G} is the noise source for the generator, not used
-  with the real samples.\label{fig:SQGANs_circuit} }
+  discriminator and \textbf{Label D} contains the label state. \textbf{Out T/G}
+  carries the generated or target state. \textbf{Label T/G} contains the label
+  state and \textbf{Batch T/G} is the noise source for the generator, not used
+  for the target states.\label{fig:SQGANs_circuit} }
 \end{figure}
 
 \subsection{Training}
 As in SGANs we are interested in the minmax game setting. Specifically, in
-the \textbf{Out D} wire, the measurement of $\ket{1}$ indicates that the sample
-was real and $\ket{0}$ that the state was generated by $G$.
+the \textbf{Out D} wire, the measurement of $\ket{1}$ indicates that the state
+was target and $\ket{0}$ that the state was generated by $G$.
 \footnote{Using $\ket{1}$ and $\ket{0}$ in this order is just a convention we
   assume. Any other orthogonal pair can be used.}
 This should be the case for each label state $\ket{\lambda}$, which gives the
-objective \ref{eq:SQGANs_objective}. 
+objective \eqref{eq:SQGANs_objective}. 
 \begin{equation}
   \begin{split}
   \label{eq:SQGANs_objective}
   & \max_{D}\min_{G} \mathcal{L}(G, D) = \\
-  & \max_{D}\min_{G}  \frac{1}{\Lambda}\sum_{\lambda \in \Lambda}{P((D(\theta_D, \ket{\lambda}, R(\lambda)) = \ket{1}) \land (D(\theta_D, \ket{\lambda}, G(\theta_G, \ket{\lambda}, \ket{z}) = \ket{0})))}
+  & \max_{D}\min_{G}  \frac{1}{\Lambda}\sum_{\lambda \in \Lambda}{P((D(\theta_D, \ket{\lambda}, T(\lambda)) = \ket{1}) \land (D(\theta_D, \ket{\lambda}, G(\theta_G, \ket{\lambda}, \ket{z}) = \ket{0})))}
   \end{split}
 \end{equation} 
 Where the discriminator objective is to maximize the probability of measuring $\ket{1}$
-given real sample and measuring $\ket{0}$ given generated state. At the same
+given the target state and measuring $\ket{0}$ given the generated state. At the same
 time for the generator the objective is to do the opposite.
 
-The SQGANs cost function \ref{eq:SQGANs_objective} in contrast to the SGANs cost
-function \ref{eq:SGANs_objective} is not defined with log-likelihood. In quantum
-setup is more natural to work with linear functions and since the $\log$ is
+The SQGANs cost function \eqref{eq:SQGANs_objective} in contrast to the SGANs cost
+function \eqref{eq:SGANs_objective} is not defined with the log-likelihood. In quantum
+setup is more natural to work with linear functions and since $\log$ is
 convex, the optimum is the same for both.
 
 The cost function $\mathcal{L}(G, D)$ expressed in terms of measurements and
-assuming equal probability of sampling from $R$ and $G$ takes the form from
-Equation \ref{eq:SQGANs_objective_trace}\cite{Dallaire_Demers_2018}.
+assuming equal probability of the sampling from $T$ and $G$ takes the form from
+Equation \eqref{eq:SQGANs_objective_trace} \cite{Dallaire_Demers_2018}.
 
 \begin{equation}
   \label{eq:SQGANs_objective_trace}
   \mathcal{L}(G, D) = \frac{1}{2} + \frac{1}{4\Lambda}\sum_{\lambda \in
-  \Lambda}{}tr((\rho_\lambda^{DR}(\theta_D) - \rho_\lambda^{DG}(\theta_D, \theta_G, z))Z)
+  \Lambda}{}tr((\rho_\lambda^{DT}(\theta_D) - \rho_\lambda^{DG}(\theta_D, \theta_G, z))Z)
 \end{equation}
 
 \subsubsection{Gradient Estimation}
 To optimize the parameters $\theta_D$ and $\theta_G$ classical gradient descent
 method was used. First, the value of the cost function $\mathcal{L}(G, D)$ was
 estimated by sampling from the circuit \ref{fig:SQGANs_circuit}. This allows to
-calculate the gradient w.r.t. $\theta_D$ and $\theta_G$ on classical computer
+calculate the gradient w.r.t. $\theta_D$ and $\theta_G$ on the classical computer
 and update the parameters at the step $k$ in the following way
 \begin{equation}
   \begin{split}
@@ -109,15 +109,15 @@ and update the parameters at the step $k$ in the following way
     \theta^{k+1}_G = \theta^{k}_G - \alpha^k_G\nabla_{\theta_G}\mathcal{L}(\theta^k_G, \theta^k_D)
   \end{split}
 \end{equation}
-where $\alpha^k_D$ and $\alpha^k_G$ are learning rate metaparameters that can
-depend on the step $k$.
+where $\alpha^k_D$ and $\alpha^k_G$ are the learning rate metaparameters that can
+depend on the the step $k$.
 
-It is also possible to estimate the gradient directly on quantum computer by
-creating an explicit quantum circuit for each element of vectors $\theta_D / \theta_G$
+It is also possible to estimate the gradient directly on the quantum computer by
+creating an explicit quantum circuit for each element of the vectors $\theta_D / \theta_G$
 and reading the grading by sampling for those circuits \cite{Dallaire_Demers_2018}.
 \subsection{Evaluation Results}
 \subsubsection{Experimental Setup}
-In all of the experiments the real samples are generated by evaluating the
+In all of the experiments the target states are generated by evaluating the
 circuit from Figure \ref{fig:phase_circuit_small}. This circuit was constructed
 by Smith et al. \cite{smith2020crossing} to study topological phase transitions.
 All the gates in the circuit are parameterized by a single real valued parameter
@@ -132,13 +132,13 @@ $g \in [-1;1]$. The detailed gates layout is described in Appendix \ref{apx:topo
     \vdots & & & & &\ldots & \gate[2, disable auto height]{U(g)} & \qw \\
     \lstick{$\ket{0}$} & \qw & \qw & \qw & \qw & \qw & \qw & \qw \\
   \end{tikzcd}
-  \caption{The circuit used for generating real samples. All the gates are
+  \caption{The circuit used for generating target states. All the gates are
     parametrized by a real valued parameter $g \in [-1; 1]$. For detailed
     description of the circuit see Appendix
     \ref{apx:topological_phase_transition_ansatz} \label{fig:phase_circuit_small}}
 \end{figure}
 
-The generator and discriminator are both build using the generic circuit
+The generator and the discriminator are both built using the generic circuit
 architecture from Appendix \ref{apx:sqgans_ansatz}. The number of layers differs
 and is specified for each experiment separately.
 
@@ -146,7 +146,7 @@ In all the experiment we use Adam optimizer \cite{kingma2017adam} with
 parameters $\beta_1 = 0.9$, $\beta_2=0.98$, $\hat{\epsilon} = 1e-9$. The
 learning rate is calculated as
 \begin{equation}
-lr = \max{(\exp{(-\frac{(k+200) \cdot \ln{100}}{4000}), 0.01)}}
+  lr = \max{\left(\exp{\left(-\frac{(k+200) \cdot \ln{100}}{4000}\right), 0.01}\right)}
 \end{equation}
 where $k$ is the optimization step number. The
 learning rate decreases from $\sim 0.8$ to $0.01$ in the first $3800$ steps and then
@@ -155,44 +155,43 @@ version of the exponentially decreasing learning rate used in
 \cite{Dallaire_Demers_2018}, the exact values were derived
 experimentally and show overall good convergence. The exact number of epochs and
 iterations is specified for each experiment separately.
-\subsubsection{Results For Pure State Real Input}
-In this setup the generator is fed the same real input state at every iteration.
-The real input state is generated using circuit from Figure
+\subsubsection{Results For Pure Target State}
+In this setup the generator is fed the same target state at every iteration.
+The target state is generated using the circuit from Figure
 \ref{fig:phase_circuit_small} for random $g \in [-1; 1]$.
 
 
 \begin{figure}[htbp!]
   \begin{tikzcd}
     \rstick{Out D} &&&&&& \rstick{$\ket{0}$} &&& \qw & \qw & \gate[2, disable auto height]{D(\theta_D)} & \meter{} \\
-    \rstick{Out R/G} &&&&&& \rstick{$\ket{0}^{\otimes n}$} &&& \gate{
+    \rstick{Out T/G} &&&&&& \rstick{$\ket{0}^{\otimes n}$} &&& \gate{
       \begin{array}{c}
-      R \\ or \\ G(\theta_G)
+      T \\ or \\ G(\theta_G)
       \end{array}
-    } & \qw \rho_{\lambda}^{R/G} & & \qw \\ 
+    } & \qw \rho_{\lambda}^{T/G} & & \qw \\ 
   \end{tikzcd}
   \caption{Simplified SQGANs architecture from Figure \ref{fig:SQGANs_circuit}. \textbf{Label} and
     \textbf{Batch} wires are removed. This design was used for pure state
     generation. \label{fig:SQGANs_circuit_simple}}
 \end{figure}
 
-For All
-the experiments, generator and discriminator were built using ansatz
-from Appendix \ref{apx:sqgans_ansatz} for each layer and simplified architecture
+For All the experiments, the generator and the discriminator were built using
+the ansatz from Appendix \ref{apx:sqgans_ansatz} for each layer, and simplified architecture
 from Figure \ref{fig:SQGANs_circuit_simple} was used.
 
 In Figure \ref{fig:sqgans_res_3} we present the
-results of experiments for different widths of the real input circuit. 
-For each real input width the generator was able to approximate the real source,
+results of the experiments for different widths of the target circuit. 
+For each target circuit width the generator was able to approximate the target state,
 increasing the fidelity as the training progressed. The training was
-harder for the bigger real source circuits and it can be clearly seen that
-the results for wider inputs are worse. Not only the final fidelity is lower, but
+harder for the bigger target circuits and it can be clearly seen that
+the results for the wider inputs are worse. Not only the final fidelity is lower, but
 also it fluctuates much more. It is also much harder for the generator to fool
 the discriminator for wider inputs.
 
 It is not surprising that it is more difficult to train circuits with more
 qubits. We also acknowledge that with different metaparameters or optimization
 method the results could be better. However, our best results for more than 5 qubits
-in the real source are not longer useful for the real source approximation.
+in the target circuit are not longer useful for the approximation.
 
 \begin{figure}[htbp!]
   \captionsetup[subfigure]{labelformat=empty}
@@ -229,30 +228,30 @@ in the real source are not longer useful for the real source approximation.
   }
   \caption{The solid line represents the average value and the shaded area
     represents the range from 5 different experiments. The first row shows the fidelity
-    between real and generated state, the second shows the probability of
-    classifying generated state as real, and the third shows the probability of
-    classifying real state as real. The generator has the
-    number of layers equal to the width of real input the discriminator has one
+    between target and generated state, the second shows the probability of
+    classifying generated state as target, and the third shows the probability of
+    classifying target state as target. The generator has the
+    number of layers equal, to the width of target circuit the discriminator has one
     more layer than the generator. In each epoch generator is optimized for 11 iterations and
   discriminator for 111. }
   \label{fig:sqgans_res_3}
 \end{figure}
-\subsubsection{Results For Mixed State Real Input}
-If the real input source can provide more than one state, we can say that the
-generator is learning mixed state of all the input states. Dallaire-Demers et
-al. \cite{Dallaire_Demers_2018} trained a simple 2 qubits circuit with two real
-input states $\ket{0}$ or $\ket{1}$. In this setup \textbf{Label} wires consist
-of one qubit and also takes values $\ket{0}$ or $\ket{1}$, effectively learning
-$CNOT$ gate. This strategy do not generalize well in to more complex cases.
+\subsubsection{Results For Mixed Target State}
+If the target circuit source can provide more than one state, we can say that the
+generator is learning a mixed state of all the input states. Dallaire-Demers et
+al. \cite{Dallaire_Demers_2018} trained a simple 2 qubits circuit with two target
+states $\ket{0}$ or $\ket{1}$. In this setup, the \textbf{Label} wires consist
+of one qubit and also take values $\ket{0}$ or $\ket{1}$, effectively learning
+$CNOT$ gate. This strategy do not generalize well into more complex cases.
 First, if there is more than one non-$\ket{0}$ input state, there would have to
 be a separate $CNOT$ gate for each state. Second, the number of qubits necessary
-for the \textbf{Label} wires grows logarithmically with the number of real input
+for the \textbf{Label} wires grows logarithmically with the number of target
 states. Both of those cause the circuit to grow in width and depth.
 
 Another approach we explored was to insert $R_x(\lambda_k)$ parametrized
-rotation gates between each layer of the generator and discriminator. The
+rotation gates between each layer of the generator and the discriminator. The
 generator is essentially learning how to rotate input state $\ket{0}$ to some
-desired real input state $\ket{r_k}$. Then, if for each $k$ the rotation is
+desired target state $\ket{r_k}$. Then, if for each $k$ the rotation is
 pushed in different direction, the final generator might give different output
 state for each $\lambda_k$. However, in our experiments the generator was always
 learning to ignore the $R_x(\lambda_k)$ and in the end was only able to produce
@@ -260,38 +259,38 @@ one, slightly distorted, state independent of $\lambda_k$.
 
 \subsection{Conclusions}
 We have experimentally evaluated SQGANs and confirmed their ability to learn
-pure quantum state. However, the problems with labeled states and small
+pure quantum states. However, the problems with the labeled states and small
 circuit width for which the training converges prevented us from succeeding in
-mixed state learning.
+the mixed state learning.
 
 The very important aspect of generative models is ability to generate new,
-unseen before, samples. In SQGANs this is theoretically possible by using the
+unseen before, states. In SQGANs this is theoretically possible by using the
 \textbf{Batch} register. However, it is not straight forward to use this register
-in the intended way. First, the task of generating random quantum state is not
+in the intended way. First, the task of generating a random quantum state is not
 trivial on its own. Second, all the problems associated with the label state
 $\lambda$ also apply to the random state $z$. 
 
 Because of the above, we decided not to pursue the exploration of SQGANs further
-and turned explored other methods.
+and turned to the other methods.
 
 
 \section{Wasserstein Quantum GANs (WQGANs)}
 
 As in the classical case, the WQGANs relay on calculating the Wasserstein
-distance between real and generated state. However, the definition of the
-Wasserstein distance cannot be trivially translated into the quantum setup.
+distance between the target and the generated state. However, the definition of 
+the Wasserstein distance cannot be trivially translated into the quantum setup.
 There has been multiple approaches to defining the quantum Wasserstein distance
 \cite{carlen2012analog,chen2016matrix,chen2018Wasserstein,ning2013matrixvalued,peyré2017quantum,golse2021quantum,Golse_2016,yu2019quantum},
 however the first take on the Wasserstein distance in the context of quantum
-GANs was proposed by Chakrabarti et. al\cite{chakrabarti2019quantum}. They
-proposed the Wasserstein semi-metric and successfully used it to train the
+GANs was proposed by Chakrabarti et. al \cite{chakrabarti2019quantum}. They
+proposed the Wasserstein semi-metric and successfully used it to train 
 quantum GANs. The shortcoming of this semi-metric is, that it does not preserve the
 triangle inequality.
 
 
 \subsection{Quantum Wasserstein Distance}
 In this work, we use the definition by De Palma et.
-al\cite{depalma2020quantum}. They proposed a generalization of
+al \cite{depalma2020quantum}. They proposed a generalization of the
 Wasserstein distance of order 1 into the quantum realm. The dual formulation of
 this distance is stated as follows:
 \begin{equation}
@@ -299,7 +298,7 @@ this distance is stated as follows:
     )}.
   \label{eq:w1_distance_general}
 \end{equation}
-Where $\mathcal{O}_n$ is a set of all $2^n \times 2^n$ Hermitian matrices and 
+Where $\mathcal{O}_n$ is the set of all $2^n \times 2^n$ Hermitian matrices and 
 $\norm{H}_L$ is the quantum Lipschitz constant of the matrix $H$ defined as:
 \begin{equation}
   \norm{H}_L = 2 \max_{i=1\ldots n}{\min_{H_{\bar{i} \in \mathcal{O}_n}}{(\norm{H - H_{\bar{i}}}_\infty)}}.
@@ -318,36 +317,36 @@ Informally, the $W_1$ distance is the maximum distance that is induced by a norm
 that assigns the distance at most one to any couple of Neighbouring States. 
 
 The quantum Wasserstein distance has several properties that make it
-particularly useful in the context of training the generative models.
+particularly useful in the context of training generative models.
 \begin{enumerate}
 \item It is invariant with respect to qubit permutations and super additive with
   respect to tensor product, (i.e. $W_1(\rho, \sigma) \geq W_1(\rho_{1 \ldots m},
   \sigma_{1 \ldots m}) + W_1(\rho_{1+m \ldots n},
   \sigma_{1+m \ldots n})$). 
 
-  This property implies, that an operation that reduces distance between some
+  This property implies, that an operation that reduces the distance between some
   marginal states also reduces the distance between the full states. For example,
   $W_1(\ket{100}, \ket{111}) > W_1(\ket{110}, \ket{111})$, this is not the case
-  however for the trace distance or fidelity, as they are always $0$
+  however for fidelity as it is always $0$
   between orthogonal states. 
 \item The quantum Wasserstein distance is bound by the trace distance, i.e.
   $T(\rho, \sigma) \leq W_1(\rho, \sigma) \leq nT(\rho, \sigma)$, where $n$ is
   the number of qubits. This ensures that minimizing the $W_1$ distance also
   minimizes the trace distance.
-\item Because the quantum Wasserstein distance recovers classical Wasserstein
+\item Because the quantum Wasserstein distance recovers the classical Wasserstein
   distance for diagonal operators, we can expect that generative models build
   using this metrics preserve the advantages of their classical counterparts.
 \end{enumerate}
 
 \subsection{WQGANs Architecture}
-In contrast to SQGANs, the design of generator and discriminator for WQGANs
-differs significantly. Here we use the architecture proposed by Kiani et. al
+In contrast to SQGANs, the design of the discriminator for WQGANs
+differs significantly from the generator. Here we use the architecture proposed by Kiani et. al
 \cite{kiani2021quantum}. The discriminator takes a form of simple linear
 program, while the generator is similar to the one from SQGANs.
 
 \subsubsection{Discriminator}
-In practice, one has to restrict set $\mathcal{O}_n$ in Equation
-\ref{eq:w1_distance_general} to make the computation feasible.
+In practice, one has to restrict the set $\mathcal{O}_n$ in Equation
+\eqref{eq:w1_distance_general} to make the computation feasible.
 As proposed in \cite{kiani2021quantum} the set of parametrized k-length Pauli
 String is used. Specifically, let
 \begin{equation}
@@ -378,8 +377,8 @@ To simplify the notation, the parameter set $W$ is enumerated as $W=\{w_1,
   \ldots, w_N\}$, where $N=|W|$ and $H_i$, $\mathcal{I}_{k_i}$ are Hamiltonian and index set
 associated with the weight $w_i$.
 
-Now, the Equation \eqref{eq:w1_distance_general} takes the form as in Equation
-\eqref{eq:quantum_wasserstein_parametrized}, where the optimization goes over
+Now, Equation \eqref{eq:w1_distance_general} takes the form as in Equation
+\eqref{eq:quantum_wasserstein_parametrized}, where the optimization goes over the
 weights $w$ instead of the Hamiltonian set $\mathcal{O}_n$.
 \begin{equation}
   \label{eq:quantum_wasserstein_parametrized}
@@ -396,7 +395,7 @@ programming. First, let
 \begin{equation}
   c_i=Tr[(\rho - \sigma)H_i],
 \end{equation}  
-  then Equation \ref{eq:quantum_wasserstein_parametrized} becomes
+  then Equation \eqref{eq:quantum_wasserstein_parametrized} becomes
 \begin{equation}
   W_1(\rho, \sigma) = \max_{w}{\sum_{i=1}^N w_ic_i}.
 \end{equation}  
@@ -404,7 +403,7 @@ Then, with
 \begin{equation}
     w_i = w_i^+ - w_i^-
 \end{equation}
-the absolute value constraint from Equation \ref{eq:absolute_value_constraint} is equivalent to the following set of
+the absolute value constraint from Equation \eqref{eq:absolute_value_constraint} is equivalent to the following set of
 constraints: 
 \begin{equation}
 \begin{split}
@@ -413,7 +412,7 @@ constraints:
   \sum_{\{i: i \in \{1,\ldots, n\} \land j \in \mathcal{I}_{k_i} \}} (w_i^+ + w_i^-) &\leq 1, \qquad j=1,\ldots,n
 \end{split}
 \end{equation}
-Now, with two vectors defined as:
+Now, with the two vectors defined as:
 \begin{equation}
 \begin{split}
 \bm{w'} &= [w_1^+, w_1^-, \ldots, w_N^+, w_N^-] \\
@@ -442,7 +441,7 @@ The weights from the original set $W$ are recovered as:
 
 
 The linear program with $n$ constraints outputs at most $n$ non-zero
-weights\cite{10.5555/548834}, so the optimal Hamiltonian which approximates the
+weights \cite{10.5555/548834}, so the optimal Hamiltonian which approximates the
 quantum Wasserstein distance the best is given by:
 \begin{equation}
 \hat{H} = \sum_{i=1}^{\hat{N}}\hat{w}_i\hat{H}_i,
@@ -455,7 +454,7 @@ to train the generator in the typical minmax game of GANs.
 \subsubsection{Generator}
 Similarly to SQGANs, the generator is built using parametrized quantum circuits.
 Specifically, the generator is defined as a sum of parametrized quantum circuits
-with corresponding probabilities (which can be interpreted as a quantum channel):
+with the corresponding probabilities (which can be interpreted as a quantum channel):
 \begin{equation}
 G(\theta) = \sum_{i=1}^r p_iG_i(\theta_i)\rho_0G_i(\theta_i)^\dagger.
 \end{equation}
@@ -471,7 +470,7 @@ parameters $\theta_i$ differ. We use different designs for $\bar{G}$ for
 different experiments, however they always fall into two categories.
 \begin{enumerate}
 \item Generic $\bar{G}$ described in Appendix \ref{apx:sqgans_ansatz} (the same as for SQGANs).
-\item $\bar{G}$ the same as the circuit used to generate the real input state.
+\item $\bar{G}$ the same as the circuit used to generate the target state.
 \end{enumerate}
 We also always set the initial state $\rho_0 = \ket{0}$.
 
@@ -483,12 +482,12 @@ In the end the generator becomes:
 
 
 \subsection{Training}
-Similarly to WGANs discriminator part of the WQGANs computes the best
-approximation of the quantum Wasserstein distance and generator tries to
+Similarly to WGANs the discriminator part of the WQGANs computes the best
+approximation of the quantum Wasserstein distance and the generator tries to
 minimize it. This can be again encoded as the minmax game.
 
-Given real input state $\rho_r$, generated state $G(\theta)$ and using trace
-properties, Equation \ref{eq:quantum_wasserstein_parametrized} can be stated as:
+Given the target state $\rho_r$, the generated state $G(\theta)$ and using trace
+properties, Equation \eqref{eq:quantum_wasserstein_parametrized} can be stated as:
 
 \begin{equation}
   \label{eq:quantum_wasserstein_separated_trace}
@@ -496,8 +495,8 @@ properties, Equation \ref{eq:quantum_wasserstein_parametrized} can be stated as:
     W_1(\rho_r, G(\theta)) = \max_{w}{(Tr[(\rho_r - G(\theta))\sum_{i=1}^N w_iH_i])} = \max_{w}{(\sum_{i=1}^Nw_i(Tr[\rho_rH_i] - Tr[G(\theta)H_i]))}.
   \end{split}
 \end{equation}
-Adding generator goal to minimize the quantum Wasserstein distance to the real
-input state, WQGANs optimization objective is stated as:
+Adding the generator goal to minimize the quantum Wasserstein distance to the target
+state, the WQGANs optimization objective is stated as:
 \begin{equation}
   \max_{w}{\min_{\theta}{\mathcal{L}(w, \theta)}} = \max_{w}{\min_{\theta}{(\sum_{i=1}^Nw_i(Tr[\rho_rH_i] - Tr[G(\theta)H_i]))}} 
   \label{eq:wqgans_optimization_objective}
@@ -508,54 +507,54 @@ accessed during the training, as it does not change.
 The overall training procedure consists of the following steps:
 \begin{enumerate}
 \item Compute the expectations $Tr[G(\theta)H_i]$ and use them together with
-  the precomputed expectation for the real input state to calculate $Tr[\rho_rH_i] -
+  the precomputed expectation for the target state to calculate $Tr[\rho_rH_i] -
   Tr[G(\theta)H_i]$ for each $i$.
 \item Find $\hat{H}$ using the linear programming formulation.
-\item Use $\hat{H}$ to find gradients of $Tr[G(\theta)\hat{H}]$ w.r.t parameters
+\item Use $\hat{H}$ to find the gradients of $Tr[G(\theta)\hat{H}]$ w.r.t the parameters
   $\theta_i$ and $p_i$ and update them.
 \end{enumerate}
 
 Those 3 steps are repeated until some stopping condition is satisfied, in our
-case we run the training for given number of steps.
+case we run the training for the given number of steps.
 
 \subsection{Evaluation Results}
 \subsubsection{Experimental Setup}
-We use two different circuits to generate real input samples. First one is the
+We use two different circuits to generate the target states. First one is the
 same as used in the SQGANs and is described in Appendix
 \ref{apx:topological_phase_transition_ansatz}.
-The second one is a butterfly circuit (also used by Kiani et.
-al\cite{kiani2021quantum}) which is described in Appendix
+The second one is the butterfly circuit (also used by Kiani et.
+al \cite{kiani2021quantum}) which is described in Appendix
 \ref{apx:butterfly_ansatz}. For the butterfly circuit we use random
 initialization for all the gates.
 
 We try two different approaches to the generator design. We use the generic
-generator described in Appendix \ref{apx:sqgans_ansatz} and generator
-design matching the circuit used to generate real input data. We specify the
-details of generator architecture for each experiment separately.
+generator described in Appendix \ref{apx:sqgans_ansatz} and the generator
+design matching the circuit used to generate the target states. We specify the
+details of the generator architecture for each experiment separately.
 
 In all the experiment we use Adam optimizer \cite{kingma2017adam} with
 parameters $\beta_1 = 0.9$, $\beta_2=0.98$, $\hat{\epsilon} = 1e-9$ and the
-learning rate of $0.1$. This learning rate was determined by experimentally. It
+learning rate of $0.1$. This learning rate was determined experimentally. It
 is important to note that the training procedure is very sensitive to changes to
 this parameter. If the learning rate is too low, gradient very quickly falls in
-a local optimum and the fidelity between real and generated state stays close to $0$.
+a local optimum and the fidelity between the target and the generated state stays close to $0$.
 
-The generator and discriminator are trained interchangeably one iteration each
+The generator and the discriminator are trained interchangeably one iteration each
 and the exact number of epoch is specified for each experiment separately.
-\subsubsection{Results For Pure Real State}
+\subsubsection{Results For Pure Target State}
 First we look at the results for topological phase transition estimation in
-Figure \ref{fig:wqgans_res_1}. The real input state is generated by running the circuit from Appendix
-\ref{apx:topological_phase_transition_ansatz} for random $g \in [-1; 1]$ and the
+Figure \ref{fig:wqgans_res_1}. The target state is generated by running the circuit from Appendix
+\ref{apx:topological_phase_transition_ansatz} for a random $g \in [-1; 1]$ and the
 generator is built using the generic ansatz from Appendix
 \ref{apx:sqgans_ansatz}. Again, no surprisingly the training gets more difficult
-as the real input size grows.
+as the target state size grows.
 
 Two the most impactful training parameters are the number of
-generator layers and k-length of Pauli strings used in the discriminator. With
-$k=3$ the fidelity is larger than $0.9$ for real input size up to $6$ qubits.
-For bigger real input sizes, expectation of larger operators is needed. The convergence is
+generator layers and the k-length of Pauli strings used in the discriminator. With
+$k=3$ the fidelity is larger than $0.9$ for the target state size up to $6$ qubits.
+For the bigger target state sizes, the expectation of larger operators is needed. The convergence is
 very fast, for $4$ generator layers only around $100$ epoch are necessary to
-achieve very good approximation, the improvements beyond that are rather
+achieve a very good approximation, the improvements beyond that are rather
 minimal. For $5$ layers the training must be longer and it's much harder to
 achieve high fidelity. For more results refer to Appendix \ref{apx:wqgans_pahse_results}.
 
@@ -589,21 +588,22 @@ achieve high fidelity. For more results refer to Appendix \ref{apx:wqgans_pahse_
   \subfloat{
     \includegraphics[width=0.25\linewidth]{figures/wqgans_phase_size=8_k=4_gen=5/Wasserstein_Distance.png}
   }
-  \caption{Results of topological phase transition estimation (ansatz Appendix \ref{apx:topological_phase_transition_ansatz}).
+  \caption{Results for the target state generated with the topological phase transition
+    circuit (Appendix \ref{apx:topological_phase_transition_ansatz}) and
+    the generator built with the generic circuit (Appendix \ref{apx:sqgans_ansatz}).
     The solid line represents the average value and the shaded area
     represents the range from 5 different experiments. The upper row shows the
-    fidelity and the bottom row shows the corresponding Wasserstein distance. In all the
-    experiments generator is built using ansatz from \ref{apx:sqgans_ansatz}.}
+    fidelity and the bottom row shows the corresponding Wasserstein distance.}
   \label{fig:wqgans_res_1}
 \end{figure}
 
 
 The results for butterfly circuit estimation are shown in the Figure
-\ref{fig:wqgans_res_butterfly_1}. The real input state is generated by running
+\ref{fig:wqgans_res_butterfly_1}. The target state is generated by running
 the circuit from Appendix \ref{apx:butterfly_ansatz} for randomly selected
 values in each gate and the generator is built using the generic ansatz from Appendix
 \ref{apx:sqgans_ansatz}. Again, no surprisingly the training gets more difficult
-as the real input size grows. However, in this case we can see that the results
+as the target state size grows. However, in this case we can see that the results
 are worse than for the phase transition circuit.
 
 
@@ -635,18 +635,19 @@ are worse than for the phase transition circuit.
   \subfloat{
     \includegraphics[width=0.25\linewidth]{figures/wqgans_butterfly_size=8_k=4_gen=5/Wasserstein_Distance.png}
   }
-  \caption{Results for butterfly circuit (ansatz Appendix \ref{apx:butterfly_ansatz}).
+  \caption{
+    Results for the target state generated with the butterfly circuit (Appendix
+    \ref{apx:butterfly_ansatz}) and the generator built with the generic circuit (Appendix \ref{apx:sqgans_ansatz}).
     The solid line represents the average value and the shaded area
     represents the range from 5 different experiments. The upper row shows the
-    fidelity and the bottom row shows the corresponding Wasserstein distance. In all the
-    experiments generator is built using ansatz from \ref{apx:sqgans_ansatz}.}
+    fidelity and the bottom row shows the corresponding Wasserstein distance.}
   \label{fig:wqgans_res_butterfly_1}
 \end{figure}
 
 It is interesting to compare those results, with the one obtained using the
-same circuit ansatz for both, real input and the generator. In Figure
-\ref{fig:wqgans_res_butterfly_same} we see the results for using butterfly
-circuit for both, real input and generator. Regardless of the size, very high
+same circuit ansatz for both, the target circuit and the generator. In Figure
+\ref{fig:wqgans_res_butterfly_same} we see the results for using the butterfly
+circuit for both, the target circuit and the generator. Regardless of the size, very high
 fidelity was achieved. This shows the importance of the generator design in the
 training process.
 
@@ -655,62 +656,63 @@ training process.
   \captionsetup[subfigure]{labelformat=empty}
   \centering
   \subfloat{
-    \includegraphics[width=0.25\linewidth]{figures/wqgans_butterfly_size=4_k=2_gen=same_as_real/fidelity.png}
+    \includegraphics[width=0.25\linewidth]{figures/wqgans_butterfly_size=4_k=2_gen=None/fidelity.png}
   }
   \subfloat{
-    \includegraphics[width=0.25\linewidth]{figures/wqgans_butterfly_size=6_k=2_gen=same_as_real/fidelity.png}
+    \includegraphics[width=0.25\linewidth]{figures/wqgans_butterfly_size=6_k=2_gen=None/fidelity.png}
   }
   \subfloat{
-    \includegraphics[width=0.25\linewidth]{figures/wqgans_butterfly_size=8_k=2_gen=same_as_real/fidelity.png}
+    \includegraphics[width=0.25\linewidth]{figures/wqgans_butterfly_size=8_k=2_gen=None/fidelity.png}
   }
   \subfloat{
-    \includegraphics[width=0.25\linewidth]{figures/wqgans_butterfly_size=10_k=3_gen=same_as_real/fidelity.png}
+    \includegraphics[width=0.25\linewidth]{figures/wqgans_butterfly_size=10_k=3_gen=None/fidelity.png}
   }
 
   \subfloat{
-    \includegraphics[width=0.25\linewidth]{figures/wqgans_butterfly_size=4_k=2_gen=same_as_real/Wasserstein_Distance.png}
+    \includegraphics[width=0.25\linewidth]{figures/wqgans_butterfly_size=4_k=2_gen=None/Wasserstein_Distance.png}
   }
   \subfloat{
-    \includegraphics[width=0.25\linewidth]{figures/wqgans_butterfly_size=6_k=2_gen=same_as_real/Wasserstein_Distance.png}
+    \includegraphics[width=0.25\linewidth]{figures/wqgans_butterfly_size=6_k=2_gen=None/Wasserstein_Distance.png}
   }
   \subfloat{
-    \includegraphics[width=0.25\linewidth]{figures/wqgans_butterfly_size=8_k=2_gen=same_as_real/Wasserstein_Distance.png}
+    \includegraphics[width=0.25\linewidth]{figures/wqgans_butterfly_size=8_k=2_gen=None/Wasserstein_Distance.png}
   }
   \subfloat{
-    \includegraphics[width=0.25\linewidth]{figures/wqgans_butterfly_size=10_k=3_gen=same_as_real/Wasserstein_Distance.png}
+    \includegraphics[width=0.25\linewidth]{figures/wqgans_butterfly_size=10_k=3_gen=None/Wasserstein_Distance.png}
   }
-  \caption{Results for butterfly circuit (ansatz Appendix \ref{apx:butterfly_ansatz}).
+  \caption{Results for the target state generate with the butterfly circuit
+    (Appendix \ref{apx:butterfly_ansatz}) and the generator built with the same 
+    butterfly circuit.
     The solid line represents the average value and the shaded area
     represents the range from 5 different experiments. The upper row shows the
-    fidelity and the bottom row shows the corresponding Wasserstein distance. In all the
-    experiments generator is built using the same butterfly circuit.}
+    fidelity and the bottom row shows the corresponding Wasserstein distance.}
   \label{fig:wqgans_res_butterfly_same}
 \end{figure}
 
 
 In all the examples we see that the approximated Wasserstein distance approaches $0$
-as fidelity approaches $1$, which is the expected behavior. The Wasserstein
-distance below $1$ indicates high fidelity between real input and generated
+as the fidelity approaches $1$, which is the expected behavior. The Wasserstein
+distance below $1$ indicates high fidelity between the target and the generated
 states.
 
-It is also important to note here, that using fixed $k$ might not be optimal
-strategy. If for given operator, the different between expectation of the
-generator and the real input source is close to $0$, this operator does not
-provide any useful information in context of learning anymore. So instead of
+It is also important to note here, that using the fixed $k$ might not be the optimal
+strategy. If for the given operator, the different between expectation of the
+generator and the target circuit is close to $0$, this operator does not
+provide any useful information in the context of learning anymore. So instead of
 evaluating all operators for given $k$, we can start with some subset and
 remove and add new ones as the training progresses \cite{kiani2021quantum}. 
-\subsubsection{Results For Mixed Real State}
-The generator definition allows for mixed state approximation. In theory each
+\subsubsection{Results For Mixed Target State}
+The generator definition allows for a mixed state approximation. In theory each
 circuit in the generator should be able to learn different pure state and its
 probability in the mix. However, we found it difficult to achieve in practice.
 
 We did not manage to train mixed state generator using the generic ansatz. But
-when using the same ansatz for the real input and the generator we were able
+when using the same ansatz for the target circuit and the generator we were able
 approximate an equal mixture of two topological phase transition circuits (results
 presented in Figure \ref{fig:wqgans_grid_phase_1}). The generator with 4 circuits
-used 2 of them to approximate the real input and also learnt the correct
+used 2 of them to approximate the target channel and also learned the correct
 probability of $0.5$ for both of them. The other 2 circuits got assigned the
-probability close to $0$ and states far from the one in the real input.
+probability close to $0$ and states far from the target.
 
 \begin{figure}[htbp!]
   \captionsetup[subfigure]{labelformat=empty}
@@ -721,37 +723,38 @@ probability close to $0$ and states far from the one in the real input.
   \subfloat{
     \includegraphics[width=0.5\linewidth]{figures/prob_grid_phase.png}
   }
-  \caption{Results for topological phase transition circuit (Appendix
-    \ref{apx:topological_phase_transition_ansatz}). The real input source
+  \caption{Results for the target state generated with topological phase transition circuit (Appendix
+    \ref{apx:topological_phase_transition_ansatz}) and the generator built with 
+    the same topological phase transition circuit. The target channel
     produces two states (for $g=0$ and $g=-1$) each with $0.5$ probability.
-    The generator consist of 4 circuits, each with the same ansatz as the real
-    input. (left) The circuit with index $0$ learnt the state for $g=-1$ and the
-    circuit with index $2$ learnt the state for $g=0$. The other two circuits
+    The generator consist of 4 circuits, each with the same ansatz as the target
+    circuit. (left) The circuit with index $0$ learned the state for $g=-1$ and the
+    circuit with index $2$ learned the state for $g=0$. The other two circuits
     did not learn any of the states. (right) How far is the generator probability 
-    from the probability in the real input. For the circuit $0$
+    from the probability in the target channel. For the circuit $0$
     and $2$ the number is close to $0$, which means that the probability was
-    correctly learnt to be $0.5$, for the other two it's close to $0.5$, which
+    correctly learned to be $0.5$, for the other two it's close to $0.5$, which
     means it is correctly around $0$.
   }
   \label{fig:wqgans_grid_phase_1}
 \end{figure}
 
-The results for the mixture of 3 states in the real input were much worse. While
+The results for the mixture of 3 states in the target state were much worse. While
 there were signs that the generator was learning, usually one of the
-states was forgotten (i.e. the generator learnt only the mixture of 2 states).
+states was forgotten (i.e. the generator learned only the mixture of 2 states).
 
 \subsection{Conclusions}
-Our experiments confirmed the ability to approximate quantum states using the
+Our experiments confirmed the ability to approximate the quantum states using the
 quantum Wasserstein distance. It is easier to train such networks and they give
 better results than SQGANs. As the input size grows, increasing the Pauli
-Strings length $k$ allows for high approximation (at the cost of increased
+Strings length $k$ allows for a better approximation (at the cost of the increased
 training complexity).
 
 The design of the generator plays a crucial role in the quality of the
 approximations. Better design also allows to use lower $k$ which makes the
 training more efficient.
 
-WQGANs also works for mixed state approximation, although only for small
+WQGANs also works for the mixed state approximation, although only for small
 mixtures.
 
 However, this architecture still does not allow to generate new, unseen before,

@@ -1,6 +1,8 @@
 \chapter{Introduction} \label{chapter:introduction}
 \section{Problem Statement}
-Generative Modeling aims to learn a conditional probability $P(X|Z = z)$, where $X$ is some observable variable and $Z$ is a target variable. With knowledge of this conditional probability, it is possible to generate new observations $\bar{x} \in X$. In general case, one would not try to obtain the probability $P(X|Z)$ exactly, but learn an approximation. To do so a set of samples $x \in X$ is necessary to train a generator function $G: Z \to X$ which given a target variable $z \in Z$ generates new observation $\bar{x} \in X$. 
+Generative Modeling aims to learn a conditional probability $P(X|Z = z)$, where
+$X$ is some observable variable and $Z$ is a target variable. With the knowledge
+of this conditional probability, it is possible to generate a new observations $\bar{x} \in X$. In general case, one would not try to obtain the probability $P(X|Z)$ exactly, but learn an approximation. To do so a set of samples $x \in X$ is necessary to train a generator function $G: Z \to X$ which given a target variable $z \in Z$ generates new observation $\bar{x} \in X$. 
 
 In the generative framework, the variable $X$ is a multidimensional vector, in particular it can be used to describe an arbitrary quantum state. With this setup, given a finite set of quantum states $\mathcal{Q} = \set{\ket{\psi_i}}, \ket{\psi_i} \in X\; \forall_i$ the generator function $G$ prepares a new quantum state $\ket{\hat{\psi}}$. This new quantum state is expected to come from the same distribution as the samples in the input set $\mathcal{Q}$.
 
@@ -16,12 +18,12 @@ generative modeling.
 \section{Previous Work}
 There exist many different types of generative models. In this work we focus on
 one particular type, namely Generative Adversarial Networks (GANs). First
-version of GANs was proposed bu Goodfellow et al.
+version of GANs was proposed by Goodfellow et al.
 \cite{goodfellow2014generative} (to which we refer as Standard GANs - SGANs),
 since then many different variations of GANs were invented
 \cite{mirza2014conditional}\cite{karras2019stylebased}\cite{radford2016unsupervised}.
 In context of this work, particularly interesting are Wasserstein GANs
-(WGANs)\cite{arjovsky2017wasserstein} which minimize \textit{Earth-Mover} distance
+(WGANs) \cite{arjovsky2017wasserstein} which minimize the \textit{Earth-Mover} distance
 between two probability distribution instead of
 \textit{Jensen–Shannon} divergence (see Chapter \ref{chapter:gans}) as in SGANs.
 
@@ -31,12 +33,12 @@ proposed QuGANs \cite{Dallaire_Demers_2018} - Quantum Generative Adversarial Net
 where generator and discriminator are parametrized quantum circuits. Similarly
 Benedetti et al. proposed fully quantum GANs for pure state approximation \cite{Benedetti_2019}, but
 with different (more suitable for NISQ \cite{Preskill_2018}) learning method.
-Hybrid methods were also explored, Zoufal et al. build qGAN \cite{Zoufal_2019} -
-with parametrized quantum circuit as the generator and classical neural network
+Hybrid methods were also explored, Zoufal et al. built qGAN \cite{Zoufal_2019} -
+with parametrized quantum circuit as the generator and a classical neural network
 as the discriminator. 
 
-De Palma et al. proposed quantum equivalent of Wasserstein distance of order 1
-\cite{depalma2020quantum} which made the Quantum Wasserstein GANs
+De Palma et al. proposed quantum equivalent of the Wasserstein distance of order 1
+\cite{depalma2020quantum} which made Quantum Wasserstein GANs
 (QWGANs) \cite{kiani2021quantum} possible. This variation of quantum GANs
 consist of the parametrized quantum circuit as the generator and the classical linear
 program as the discriminator.
@@ -45,16 +47,19 @@ program as the discriminator.
 There has been a substantial effort in the direction of bringing GANs into the quantum
 realm. Nevertheless, this is still very early stage and many more routs are yet
 to be explored. In this work we focus on building quantum GANs that can generate
-new, unseen before, quantum states. Majority of models proposed so far are only
-able to generate the states the has been a part of the training data. Only some
-architectures \cite{Dallaire_Demers_2018} account for random noise in the input
-that allows to generate unseen states. However, as we discuss later, those are
+new, unseen at the training time, quantum states. The majority of the models
+proposed so far are only able to generate the states the have 
+been a part of the input set and were evaluated at the training time. Only some 
+architectures \cite{Dallaire_Demers_2018} account for the random noise in the input
+that allows to generate new, unseen states. However, as we discuss later, those are
 mostly theoretical and do not seem to work well in practice.
 
 
-We propose a new quantum-classical hybrid approach that allows to generate
-an unlimited number of unseen quantum states. We utilize the fully quantum and fully
-classical generative models that work together in one framework. 
+We propose a new quantum-classical hybrid method. First, it learns the
+distribution over the expectations of some predefined set of measurements, and later uses this
+distribution to generate an unlimited number of unseen quantum states, that were not part of the input
+set. We utilize the fully quantum and fully classical generative models that
+work together in one framework. 
 
 We proceed as follows. In Chapter \ref{chapter:quantum_mechanic_introduction} we
 establish the quantum computing notation used in the reminder of this work. In

@@ -175,7 +175,7 @@ size_4_ids_wqgans_butterfly_k_3_gen_4_same = {
     'ids': get_ids([246, 264, 270], id_prefix_wqgans),
     'size': 4,
     'k': 3,
-    'gen': "same as real",
+    'gen': None,
     'type': 'butterfly',
     'color': colors[3]
 }
@@ -184,7 +184,7 @@ size_5_ids_wqgans_butterfly_k_3_gen_4_same = {
     'ids': get_ids([247, 253, 259, 265, 272], id_prefix_wqgans),
     'size': 5,
     'k': 3,
-    'gen': "same as real",
+    'gen': None,
     'type': 'butterfly',
     'color': colors[3]
 }
@@ -193,7 +193,7 @@ size_6_ids_wqgans_butterfly_k_3_gen_4_same = {
     'ids': get_ids([248, 254, 260, 266, 273, 279], id_prefix_wqgans),
     'size': 6,
     'k': 3,
-    'gen': "same as real",
+    'gen': None,
     'type': 'butterfly',
     'color': colors[3]
 }
@@ -202,7 +202,7 @@ size_7_ids_wqgans_butterfly_k_3_gen_4_same = {
     'ids': get_ids([249, 255, 267, 274, 280], id_prefix_wqgans),
     'size': 7,
     'k': 3,
-    'gen': "same as real",
+    'gen': None,
     'type': 'butterfly',
     'color': colors[3]
 }
@@ -211,7 +211,7 @@ size_8_ids_wqgans_butterfly_k_3_gen_4_same = {
     'ids': get_ids([256, 262, 268, 281], id_prefix_wqgans),
     'size': 8,
     'k': 3,
-    'gen': "same as real",
+    'gen': None,
     'type': 'butterfly',
     'color': colors[3]
 }
@@ -220,7 +220,7 @@ size_4_ids_wqgans_butterfly_k_2_gen_4_same = {
     'ids': get_ids([330, 339, 349, 363, 370], id_prefix_wqgans),
     'size': 4,
     'k': 2,
-    'gen': "same as real",
+    'gen': None,
     'type': 'butterfly',
     'color': colors[3]
 }
@@ -229,7 +229,7 @@ size_5_ids_wqgans_butterfly_k_2_gen_4_same = {
     'ids': get_ids([340, 350, 357, 371, 377], id_prefix_wqgans),
     'size': 5,
     'k': 2,
-    'gen': "same as real",
+    'gen': None,
     'type': 'butterfly',
     'color': colors[3]
 }
@@ -238,7 +238,7 @@ size_6_ids_wqgans_butterfly_k_2_gen_4_same = {
     'ids': get_ids([342, 351, 358, 378], id_prefix_wqgans),
     'size': 6,
     'k': 2,
-    'gen': "same as real",
+    'gen': None,
     'type': 'butterfly',
     'color': colors[3]
 }
@@ -247,7 +247,7 @@ size_7_ids_wqgans_butterfly_k_2_gen_4_same = {
     'ids': get_ids([343, 352, 359, 373, 379], id_prefix_wqgans),
     'size': 7,
     'k': 2,
-    'gen': "same as real",
+    'gen': None,
     'type': 'butterfly',
     'color': colors[3]
 }
@@ -256,7 +256,7 @@ size_8_ids_wqgans_butterfly_k_2_gen_4_same = {
     'ids': get_ids([344, 353, 367], id_prefix_wqgans),
     'size': 8,
     'k': 2,
-    'gen': "same as real",
+    'gen': None,
     'type': 'butterfly',
     'color': colors[3]
 }
@@ -264,7 +264,7 @@ size_9_ids_wqgans_butterfly_k_2_gen_4_same = {
     'ids': get_ids([335, 345, 361, 368, 375], id_prefix_wqgans),
     'size': 9,
     'k': 2,
-    'gen': "same as real",
+    'gen': None,
     'type': 'butterfly',
     'color': colors[3]
 }
@@ -272,7 +272,7 @@ size_10_ids_wqgans_butterfly_k_3_gen_4_same = {
     'ids': get_ids([384, 436, 439, 441], id_prefix_wqgans),
     'size': 10,
     'k': 3,
-    'gen': "same as real",
+    'gen': None,
     'type': 'butterfly',
     'color': colors[3]
 }
@@ -340,7 +340,7 @@ size_4_ids_wqgans_butterfly_k_2_gen_same_gans = {
     'ids': get_ids([266, 264, 263, 262, 261], id_prefix_wqgans_gans),
     'size': 4,
     'k': 2,
-    'gen': "same as real",
+    'gen': None,
     'type': 'butterfly',
     'color': colors[3],
     'suffix': 'gan'
@@ -350,7 +350,7 @@ size_6_ids_wqgans_butterfly_k_2_gen_same_gans = {
     'ids': get_ids([272, 275, 197, 280, 278], id_prefix_wqgans_gans),
     'size': 6,
     'k': 2,
-    'gen': "same as real",
+    'gen': None,
     'type': 'butterfly',
     'color': colors[3],
     'suffix': 'gan'
@@ -360,62 +360,62 @@ size_8_ids_wqgans_butterfly_k_2_gen_same_gans = {
     'ids': get_ids([301, 297, 298, 299, 296], id_prefix_wqgans_gans),
     'size': 8,
     'k': 2,
-    'gen': "same as real",
+    'gen': None,
     'type': 'butterfly',
     'color': colors[3],
     'suffix': 'gan'
 }
 
 metadata = [
-    # {'ids': size_3_ids, 'dir': 'sqgans_size=3', 'sub_title': f"real input qubits = {3}"},
-    # {'ids': size_4_ids, 'dir': 'sqgans_size=4', 'sub_title': f"real input qubits = {4}"},
-    # {'ids': size_5_ids, 'dir': 'sqgans_size=5', 'sub_title': f"real input qubits = {5}"},
+    # {'ids': size_3_ids, 'dir': 'sqgans_size=3', 'sub_title': f"target state qubits = {3}"},
+    # {'ids': size_4_ids, 'dir': 'sqgans_size=4', 'sub_title': f"target state qubits = {4}"},
+    # {'ids': size_5_ids, 'dir': 'sqgans_size=5', 'sub_title': f"target state qubits = {5}"},
     #     {
     #         'ids': size_4_ids_wqgans_phase_k_3_gen_4,
     #         'dir': 'wqgans_phase_size=4_k=3_gen=4',
-    #         'sub_title': f"real input qubits = {4}, gen layers = {4}, k = 3",
+    #         'sub_title': f"target state qubits = {4}, gen layers = {4}, k = 3",
     #         'color': colors[0]
     #     },
     #     {
     #         'ids': size_5_ids_wqgans_phase_k_3_gen_4,
     #         'dir': 'wqgans_phase_size=5_k=3_gen=4',
-    #         'sub_title': f"real input qubits = {5}, gen layers = {4}, k = 3",
+    #         'sub_title': f"target state qubits = {5}, gen layers = {4}, k = 3",
     #         'color': colors[0]
     #     },
     #     {
     #         'ids': size_6_ids_wqgans_phase_k_3_gen_4,
     #         'dir': 'wqgans_phase_size=6_k=3_gen=4',
-    #         'sub_title': f"real input qubits = {6}, gen layers = {4}, k = 3",
+    #         'sub_title': f"target state qubits = {6}, gen layers = {4}, k = 3",
     #         'color': colors[0]
     #     },
     #     {
     #         'ids': size_7_ids_wqgans_phase_k_3_gen_4,
     #         'dir': 'wqgans_phase_size=7_k=3_gen=4',
-    #         'sub_title': f"real input qubits = {7}, gen layers = {4}, k = 3",
+    #         'sub_title': f"target state qubits = {7}, gen layers = {4}, k = 3",
     #         'color': colors[0]
     #     },
     #     {
     #         'ids': size_8_ids_wqgans_phase_k_3_gen_4,
     #         'dir': 'wqgans_phase_size=8_k=3_gen=4',
-    #         'sub_title': f"real input qubits = {8}, gen layers = {4}, k = 3",
+    #         'sub_title': f"target state qubits = {8}, gen layers = {4}, k = 3",
     #         'color': colors[0]
     #     },
     #     {
     #         'ids': size_6_ids_wqgans_phase_k_3_gen_5,
     #         'dir': 'wqgans_phase_size=6_k=3_gen=5',
-    #         'sub_title': f"real input qubits = {6}, gen layers = {5}, k = 3",
+    #         'sub_title': f"target state qubits = {6}, gen layers = {5}, k = 3",
     #         'color': colors[1]
     #     },
     #     {
     #         'ids': size_7_ids_wqgans_phase_k_3_gen_5,
     #         'dir': 'wqgans_phase_size=7_k=3_gen=5',
-    #         'sub_title': f"real input qubits = {7}, gen layers = {5}, k = 3",
+    #         'sub_title': f"target state qubits = {7}, gen layers = {5}, k = 3",
     #         'color': colors[1]
     #     },
     #     {
     #         'ids': size_8_ids_wqgans_phase_k_3_gen_5,
     #         'dir': 'wqgans_phase_size=8_k=3_gen=5',
-    #         'sub_title': f"real input qubits = {8}, gen layers = {5}, k = 3",
+    #         'sub_title': f"target state qubits = {8}, gen layers = {5}, k = 3",
     #         'color': colors[1]
     #     },
 ]
@@ -452,30 +452,35 @@ for meta_dict in [
     # size_7_ids_wqgans_butterfly_k_2_gen_4_same,
     # size_8_ids_wqgans_butterfly_k_2_gen_4_same,
     # size_9_ids_wqgans_butterfly_k_2_gen_4_same,
-    size_10_ids_wqgans_butterfly_k_3_gen_4_same,
+    # size_10_ids_wqgans_butterfly_k_3_gen_4_same,
     # size_8_ids_wqgans_phase_k_4_gen_4_interpolation,
     # size_8_ids_wqgans_phase_k_4_gen_5_interpolation,
-    # size_4_ids_wqgans_butterfly_k_2_gen_same_gans,
-    # size_6_ids_wqgans_butterfly_k_2_gen_same_gans,
-    # size_8_ids_wqgans_butterfly_k_2_gen_same_gans,
+    size_4_ids_wqgans_butterfly_k_2_gen_same_gans,
+    size_6_ids_wqgans_butterfly_k_2_gen_same_gans,
+    size_8_ids_wqgans_butterfly_k_2_gen_same_gans,
 ]:
     if meta_dict.get('suffix'):
         directory = f"wqgans_{meta_dict['type']}_size={meta_dict['size']}_k={meta_dict['k']}_gen={str(meta_dict['gen']).replace(' ', '_')}_{meta_dict['suffix']}"
     else:
         directory = f"wqgans_{meta_dict['type']}_size={meta_dict['size']}_k={meta_dict['k']}_gen={str(meta_dict['gen']).replace(' ', '_')}"
+    if meta_dict.get('gen'):
+        gen_layers = f", gen layers = {meta_dict['gen']}"
+    else:
+        gen_layers = ""
+
     metadata.append(
         {
             'ids': meta_dict['ids'],
             'dir': directory,
-            'sub_title': f"real input qubits = {meta_dict['size']}, gen layers = {meta_dict['gen']}, k = {meta_dict['k']}",
+            'sub_title': f"target state qubits = {meta_dict['size']}{gen_layers}, k = {meta_dict['k']}",
             'color': meta_dict['color']
         }
     )
 
 metadata_per_project = {'thesis': {
     'fidelity_g': {'name': 'fidelity', 'color': colors[0]},
-    'prob_real_real': {'name': 'probability real as real', 'color': colors[1]},
-    'prob_fake_real': {'name': 'probability generated as real', 'color': colors[2]}
+    'prob_real_real': {'name': 'probability target as target', 'color': colors[1]},
+    'prob_fake_real': {'name': 'probability generated as target', 'color': colors[2]}
 },
     'thesis-em2': {
         'fidelity (': {'name': 'fidelity', 'color': colors[0]},
@@ -514,16 +519,17 @@ def plot_metric(metric, data_name, color, sub_title, ylim):
     ax.plot(list(range(len(metric[0]))), mean, c=color)
     ax.fill_between(list(range(len(metric[0]))), mi, ma, alpha=0.3, facecolor=color)
     # ax.fill_between(list(range(len(metric[0]))), mean - std, mean + std, alpha=0.3, facecolor=color)
-    ax.set_xlabel("epoch", fontsize=20)
-    ax.set_ylabel(data_name, fontsize=20)
+    ax.set_xlabel("epoch", fontsize=22)
+    ax.set_ylabel(data_name, fontsize=22)
     ax.set_ylim(ylim[0], ylim[1])
-    fig.suptitle(sub_title, fontsize=18)
+    fig.suptitle(sub_title, fontsize=22, wrap=True)
     plt.show()
     return fig
 
 
-# project = 'thesis-em-exps'
-project = 'thesis-em2'
+project = 'thesis-em-exps'
+# project = 'thesis-em2'
+# project = 'thesis'
 # prefix_to_metrics_metadata = metadata_per_project['thesis']
 prefix_to_metrics_metadata = metadata_per_project[project]
 for meta in metadata:

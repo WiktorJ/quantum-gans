@@ -2,21 +2,21 @@
 \label{apx:JSD}
 Kullback-Leibler (KL) divergence, by definition is stated as follows
 \begin{equation*}
-  D_{KL}(p || q) = \int_xp(x)log(\frac{p(x)}{q(x)})dx. 
+  D_{KL}(p || q) = \int_xp(x)log\left(\frac{p(x)}{q(x)}\right)dx. 
 \end{equation*}
 
 Jensen-Shannon (JS) divergence is defined using KL divergence is stated as follows
 way
 \begin{equation*}
-D_{JS}(p || q) = \frac{1}{2}(D_{KL}(p || \frac{p+q}{2}) + D_{KL}(q || \frac{p+q}{2})).
+D_{JS}(p || q) = \frac{1}{2}\left(D_{KL}\left(p || \frac{p+q}{2}\right) + D_{KL}\left(q || \frac{p+q}{2}\right)\right).
 \end{equation*}
 
 
 The SGANs loss function, using continuous expectation definition, is stated as follows
 \begin{equation*}
   \begin{split}
-    \mathcal{L}(G, D) & =  \mathbb{E}_{x \sim p_r(x)}[\log{D(x)}] +  \mathbb{E}_{x \sim p_g(x)}[\log{1 - D(x)}] \\
-    & = \int_x(p_r(x)\log{(D(x))} + p_g(x)\log{(1-D(x))})dx \\
+    \mathcal{L}(G, D) & =  \mathbb{E}_{x \sim p_t(x)}[\log{D(x)}] +  \mathbb{E}_{x \sim p_g(x)}[\log{1 - D(x)}] \\
+    & = \int_x(p_t(x)\log{(D(x))} + p_g(x)\log{(1-D(x))})dx \\
     & = \int_xf(x)dx.
   \end{split}
 \end{equation*}
@@ -26,17 +26,17 @@ function $f(x)$.
 
 \begin{equation*}
 \begin{split}
-  \frac{df(x)}{dx} & = \frac{p_r(x)}{\ln{10} * D^*(x)} - \frac{p_g(x)}{\ln{10} * (1-D^*(x))} = 0 \Rightarrow \\
-  D^*(x) & = \frac{p_r(x)}{p_r(x) + p_g(x)}
+  \frac{df(x)}{dx} & = \frac{p_t(x)}{\ln{10} * D^*(x)} - \frac{p_g(x)}{\ln{10} * (1-D^*(x))} = 0 \Rightarrow \\
+  D^*(x) & = \frac{p_t(x)}{p_t(x) + p_g(x)}
 \end{split}
 \end{equation*}
 So the loss function for $D^*(x)$ takes the form
 \begin{equation}
-  \mathcal{L}(G, D^*) = \int_x(p_r(x)\log{(\frac{p_r(x)}{p_r(x) + p_g(x)})} + p_g(x)\log{(\frac{p_g(x)}{p_r(x) + p_g(x)})}dx.
+  \mathcal{L}(G, D^*) = \int_x(p_t(x)\log{\left(\frac{p_t(x)}{p_t(x) + p_g(x)}\right)} + p_g(x)\log{\left(\frac{p_g(x)}{p_t(x) + p_g(x)}\right)}dx.
   \label{eq:sgan_optimal_disc}
 \end{equation}
 For the optimal generator $G*$, the probabilities of predicting generated and
-real data are equal, i.e. $p_r=p_g$, and the loss function becomes constant
+target data are equal, i.e. $p_t=p_g$, and the loss function becomes constant
 \begin{equation}
 \mathcal{L}(G^*, D^*) = -log{4}.
 \label{eq:sgan_optimal_gen_disc}
@@ -45,17 +45,17 @@ Now, we can rewrite Equation \ref{eq:sgan_optimal_disc} using the definition of 
 divergence
 \begin{equation*}
   \begin{split}
-    \mathcal{L}(G, D^*) & = D_{KL}(p_r || p_r + p_g) + D_{KL}(p_g || p_r + p_g) \\ 
-    & = D_{KL}(p_r || \frac{p_r + p_g}{2}) - \log{2} + D_{KL}(p_g || \frac{p_r + p_g}{2}) -\log{2} \\
-    & = D_{JS}(p_r || p_g) - log{4}
+    \mathcal{L}(G, D^*) & = D_{KL}(p_t || p_t + p_g) + D_{KL}(p_g || p_t + p_g) \\ 
+    & = D_{KL}\left(p_t || \frac{p_t + p_g}{2}\right) - \log{2} + D_{KL}\left(p_g || \frac{p_t + p_g}{2}\right) -\log{2} \\
+    & = D_{JS}(p_t || p_g) - log{4}
   \end{split}
 \end{equation*}
 Using the Equation \ref{eq:sgan_optimal_gen_disc} for optimal loss we see that
 \begin{equation*}
-  \mathcal{L}(G^*, D^*) = D_{JS}(p_r || p_g) -log{4} =  - log{4}
+  \mathcal{L}(G^*, D^*) = D_{JS}(p_t || p_g) -log{4} =  - log{4}
 \end{equation*}
 from which we conclude that for optimal case of training the Jensen-Shannon
-divergence is $0$ and the distributions $p_r$ and $p_q$ are equal. $\qed$
+divergence is $0$ and the distributions $p_t$ and $p_q$ are equal. $\qed$
 
 % If there are several additions you want to add, but they do not fit into the thesis itself, they belong here.
 
@@ -250,11 +250,12 @@ Where
   \subfloat{
     \includegraphics[width=0.3\linewidth]{figures/wqgans_phase_size=8_k=3_gen=5/Wasserstein_Distance.png}
   }
-  \caption{Results of topological phase transition estimation (ansatz Appendix \ref{apx:topological_phase_transition_ansatz}).
+  \caption{Results for the target state generated with the topological phase
+    transition circuit (Appendix \ref{apx:topological_phase_transition_ansatz})
+    and the generator built with the generic circuit (Appendix \ref{apx:sqgans_ansatz}).
     The solid line represents the average value and the shaded area
     represents the range from 5 different experiments. First the
-    fidelity is shown and below the corresponding Wasserstein distance. In all the
-    experiments the generator is built using ansatz from \ref{apx:sqgans_ansatz}.}
+    fidelity is shown and below the corresponding Wasserstein distance.}
   \label{fig:wqgans_phase_res_3}
 \end{figure}
 
@@ -301,11 +302,13 @@ Where
   \subfloat{
     \includegraphics[width=0.3\linewidth]{figures/wqgans_phase_size=9_k=4_gen=5/Wasserstein_Distance.png}
   }
-  \caption{Results of topological phase transition estimation (ansatz Appendix \ref{apx:topological_phase_transition_ansatz}).
+  \caption{
+    Results for the target state generated with the topological phase
+    transition circuit (Appendix \ref{apx:topological_phase_transition_ansatz})
+    and the generator built with the generic circuit (Appendix \ref{apx:sqgans_ansatz}).
     The solid line represents the average value and the shaded area
     represents the range from 5 different experiments. First the
-    fidelity is shown and below the corresponding Wasserstein distance. In all the
-    experiments the generator is built using ansatz from \ref{apx:sqgans_ansatz}.}
+    fidelity is shown and below the corresponding Wasserstein distance.}
   \label{fig:wqgans_phase_res_5}
 \end{figure}
 \label{apx:wqgans_pahse_results_butterfly}
@@ -364,11 +367,11 @@ Where
   \subfloat{
     \includegraphics[width=0.25\linewidth]{figures/wqgans_butterfly_size=8_k=4_gen=4/Wasserstein_Distance.png}
   }
-  \caption{Results of butterfly circuit estimation (ansatz Appendix \ref{apx:butterfly_ansatz}).
+  \caption{Results for the target state generated with the butterfly circuit (Appendix \ref{apx:butterfly_ansatz})
+    and the generator built with the generic circuit (Appendix \ref{apx:sqgans_ansatz}).
     The solid line represents the average value and the shaded area
     represents the range from 5 different experiments. First the
-    fidelity is shown and below the corresponding Wasserstein distance. In all the
-    experiments the generator is built using ansatz from \ref{apx:sqgans_ansatz}.}
+    fidelity is shown and below the corresponding Wasserstein distance.}
   \label{fig:wqgans_res_butterfly_3}
 \end{figure}
 \let\clearpage\oldclearpage
