@@ -329,12 +329,12 @@ particularly useful in the context of training generative models.
   $W_1(\ket{100}, \ket{111}) > W_1(\ket{110}, \ket{111})$, this is not the case
   however for fidelity as it is always $0$
   between orthogonal states. 
-\item The quantum Wasserstein distance is bound by the trace distance, i.e.
+\item The quantum Wasserstein distance is bounded by the trace distance, i.e.
   $T(\rho, \sigma) \leq W_1(\rho, \sigma) \leq nT(\rho, \sigma)$, where $n$ is
   the number of qubits. This ensures that minimizing the $W_1$ distance also
   minimizes the trace distance.
 \item Because the quantum Wasserstein distance recovers the classical Wasserstein
-  distance for diagonal operators, we can expect that generative models build
+  distance for diagonal operators, we can expect that generative models built
   using this metrics preserve the advantages of their classical counterparts.
 \end{enumerate}
 
