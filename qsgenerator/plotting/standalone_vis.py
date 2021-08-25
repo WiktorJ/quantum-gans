@@ -367,9 +367,9 @@ size_8_ids_wqgans_butterfly_k_2_gen_same_gans = {
 }
 
 metadata = [
-    # {'ids': size_3_ids, 'dir': 'sqgans_size=3', 'sub_title': f"target state qubits = {3}"},
-    # {'ids': size_4_ids, 'dir': 'sqgans_size=4', 'sub_title': f"target state qubits = {4}"},
-    # {'ids': size_5_ids, 'dir': 'sqgans_size=5', 'sub_title': f"target state qubits = {5}"},
+    {'ids': size_3_ids, 'dir': 'sqgans_size=3', 'sub_title': f"target state qubits = {3}"},
+    {'ids': size_4_ids, 'dir': 'sqgans_size=4', 'sub_title': f"target state qubits = {4}"},
+    {'ids': size_5_ids, 'dir': 'sqgans_size=5', 'sub_title': f"target state qubits = {5}"},
     #     {
     #         'ids': size_4_ids_wqgans_phase_k_3_gen_4,
     #         'dir': 'wqgans_phase_size=4_k=3_gen=4',
@@ -455,9 +455,9 @@ for meta_dict in [
     # size_10_ids_wqgans_butterfly_k_3_gen_4_same,
     # size_8_ids_wqgans_phase_k_4_gen_4_interpolation,
     # size_8_ids_wqgans_phase_k_4_gen_5_interpolation,
-    size_4_ids_wqgans_butterfly_k_2_gen_same_gans,
-    size_6_ids_wqgans_butterfly_k_2_gen_same_gans,
-    size_8_ids_wqgans_butterfly_k_2_gen_same_gans,
+    # size_4_ids_wqgans_butterfly_k_2_gen_same_gans,
+    # size_6_ids_wqgans_butterfly_k_2_gen_same_gans,
+    # size_8_ids_wqgans_butterfly_k_2_gen_same_gans,
 ]:
     if meta_dict.get('suffix'):
         directory = f"wqgans_{meta_dict['type']}_size={meta_dict['size']}_k={meta_dict['k']}_gen={str(meta_dict['gen']).replace(' ', '_')}_{meta_dict['suffix']}"
@@ -527,13 +527,13 @@ def plot_metric(metric, data_name, color, sub_title, ylim):
     return fig
 
 
-project = 'thesis-em-exps'
+# project = 'thesis-em-exps'
 # project = 'thesis-em2'
-# project = 'thesis'
+project = 'thesis'
 # prefix_to_metrics_metadata = metadata_per_project['thesis']
 prefix_to_metrics_metadata = metadata_per_project[project]
 for meta in metadata:
-    data = get_data(meta['ids'], prefix_to_metrics_metadata.keys(), project, filter_epoch=False)
+    data = get_data(meta['ids'], prefix_to_metrics_metadata.keys(), project, filter_epoch=True)
     for prefix, metric in data.items():
         name = prefix_to_metrics_metadata[prefix]['name']
         fig = plot_metric(metric,

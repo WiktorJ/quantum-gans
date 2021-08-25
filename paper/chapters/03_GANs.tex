@@ -53,7 +53,7 @@ Putting it all together, we get the objective for SGANs \eqref{eq:SGANs_objectiv
 \begin{equation}
   \label{eq:SGANs_objective}
   \begin{split}
-    \min_G\max_D\mathcal{L(G, D)} & = \min_G\max_D \mathbb{E}_{x \sim p_t(x)}[\log{D(x)}] +  \mathbb{E}_{z \sim p_z(z)}[\log{1 - D(G(z))}] \\
+    \min_G\max_D\mathcal{L}(G, D) & = \min_G\max_D \mathbb{E}_{x \sim p_t(x)}[\log{D(x)}] +  \mathbb{E}_{z \sim p_z(z)}[\log{1 - D(G(z))}] \\
     & = \min_G\max_D \mathbb{E}_{x \sim p_t(x)}[\log{D(x)}] +  \mathbb{E}_{x \sim p_g(x)}[\log{1 - D(x)}]
   \end{split}
 \end{equation}
