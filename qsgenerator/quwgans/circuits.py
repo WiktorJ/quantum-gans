@@ -3,7 +3,8 @@ from typing import List, Dict, Tuple, Set
 
 import cirq
 
-from qsgenerator.phase.circuits import PhaseCircuitBuilder
+from qsgenerator.phase.string_order_parameters import get_s1_pauli_string, \
+    get_szy_pauli_string
 
 
 def __get_strings_for_index(index: List[int], qubits: List[cirq.Qid]):
@@ -38,27 +39,42 @@ def __get_qubit_indexes(n: int, k: int) -> List[List[int]]:
     return indexes
 
 
-def __get_pauli_strings_for_k(qubits: List[cirq.Qid], k) -> Set[cirq.PauliString]:
+def __get_pauli_strings_for_k(qubits: List[cirq.Qid], k) -> Set[
+    cirq.PauliString]:
     pauli_strings = set()
     for index in __get_qubit_indexes(len(qubits), k):
-        pauli_strings = pauli_strings.union(__get_strings_for_index(index, qubits))
+        pauli_strings = pauli_strings.union(
+            __get_strings_for_index(index, qubits))
     return pauli_strings
 
 
-def __get_paul_strings_up_to_k(qubits: List[cirq.Qid], k) -> Set[cirq.PauliString]:
+def __get_paul_strings_up_to_k(qubits: List[cirq.Qid], k) -> Set[
+    cirq.PauliString]:
     pauli_strings = set()
     for i in range(k):
-        pauli_strings = pauli_strings.union(__get_pauli_strings_for_k(qubits, i + 1))
+        pauli_strings = pauli_strings.union(
+            __get_pauli_strings_for_k(qubits, i + 1))
     return pauli_strings
 
 
-def get_discriminator(circuit: cirq.Circuit, k: int = 2):
-    return __get_pauli_strings(list(circuit.all_qubits()), k)
+def get_discriminator(
+        circuit: cirq.Circuit,
+        k: int = 2,
+        add_phase_strings: bool = False
+) -> Tuple[List[cirq.PauliString], Dict[cirq.Qid, List[int]]]:
+    return __get_pauli_strings(circuit, k, add_phase_strings)
 
 
-def __get_pauli_strings(qubits: List[cirq.Qid], k: int = 2) -> \
-        Tuple[List[cirq.PauliString], Dict[cirq.Qid, List[int]]]:
+def __get_pauli_strings(
+        circuit: cirq.Circuit,
+        k: int = 2,
+        add_phase_strings: bool = False
+) -> Tuple[List[cirq.PauliString], Dict[cirq.Qid, List[int]]]:
+    qubits = list(circuit.all_qubits())
     pauli_strings: Set[cirq.PauliString] = __get_paul_strings_up_to_k(qubits, k)
+    if add_phase_strings:
+        pauli_strings.add(get_s1_pauli_string(circuit))
+        pauli_strings.add(get_szy_pauli_string(circuit))
     pauli_strings_list = []
     qubit_to_string_index = defaultdict(list)
     for pauli_string in pauli_strings:

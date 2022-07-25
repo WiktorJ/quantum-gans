@@ -486,28 +486,28 @@ Similarly to WGANs the discriminator part of the WQGANs computes the best
 approximation of the quantum Wasserstein distance and the generator tries to
 minimize it. This can be again encoded as the minmax game.
 
-Given the target state $\rho_r$, the generated state $G(\theta)$ and using trace
+Given the target state $\rho_t$, the generated state $G(\theta)$ and using trace
 properties, Equation \eqref{eq:quantum_wasserstein_parametrized} can be stated as:
 
 \begin{equation}
   \label{eq:quantum_wasserstein_separated_trace}
   \begin{split}
-    W_1(\rho_r, G(\theta)) = \max_{w}{(Tr[(\rho_r - G(\theta))\sum_{i=1}^N w_iH_i])} = \max_{w}{(\sum_{i=1}^Nw_i(Tr[\rho_rH_i] - Tr[G(\theta)H_i]))}.
+    W_1(\rho_t, G(\theta)) = \max_{w}{(Tr[(\rho_t - G(\theta))\sum_{i=1}^N w_iH_i])} = \max_{w}{(\sum_{i=1}^Nw_i(Tr[\rho_tH_i] - Tr[G(\theta)H_i]))}.
   \end{split}
 \end{equation}
 Adding the generator goal to minimize the quantum Wasserstein distance to the target
 state, the WQGANs optimization objective is stated as:
 \begin{equation}
-  \max_{w}{\min_{\theta}{\mathcal{L}(w, \theta)}} = \max_{w}{\min_{\theta}{(\sum_{i=1}^Nw_i(Tr[\rho_rH_i] - Tr[G(\theta)H_i]))}} 
+  \max_{w}{\min_{\theta}{\mathcal{L}(w, \theta)}} = \max_{w}{\min_{\theta}{(\sum_{i=1}^Nw_i(Tr[\rho_tH_i] - Tr[G(\theta)H_i]))}} 
   \label{eq:wqgans_optimization_objective}
 \end{equation}
-In practice, the expectation $Tr[\rho_rH_i]$ can be precomputed and only
+In practice, the expectation $Tr[\rho_tH_i]$ can be precomputed and only
 accessed during the training, as it does not change.
 
 The overall training procedure consists of the following steps:
 \begin{enumerate}
 \item Compute the expectations $Tr[G(\theta)H_i]$ and use them together with
-  the precomputed expectation for the target state to calculate $Tr[\rho_rH_i] -
+  the precomputed expectation for the target state to calculate $Tr[\rho_tH_i] -
   Tr[G(\theta)H_i]$ for each $i$.
 \item Find $\hat{H}$ using the linear programming formulation.
 \item Use $\hat{H}$ to find the gradients of $Tr[G(\theta)\hat{H}]$ w.r.t the parameters
